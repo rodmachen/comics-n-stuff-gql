@@ -1,0 +1,304 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Reference / Lookup Tables ───────────────────────────────────────────────
+
+model Country {
+  id   Int    @id @default(autoincrement())
+  code String @unique @db.VarChar(10)
+  name String @db.VarChar(255)
+
+  publishers         Publisher[]
+  series             Series[]
+  creatorsborn       Creator[]  @relation("BirthCountry")
+  creatorsDied       Creator[]  @relation("DeathCountry")
+
+  @@map("stddata_country")
+}
+
+model Language {
+  id         Int    @id @default(autoincrement())
+  code       String @unique @db.VarChar(10)
+  name       String @db.VarChar(255)
+  nativeName String @map("native_name") @db.VarChar(255)
+
+  series Series[]
+
+  @@map("stddata_language")
+}
+
+model StoryType {
+  id       Int    @id @default(autoincrement())
+  name     String @unique @db.VarChar(50)
+  sortCode Int    @map("sort_code")
+
+  stories Story[]
+
+  @@map("gcd_story_type")
+}
+
+model CreditType {
+  id       Int    @id @default(autoincrement())
+  name     String @unique @db.VarChar(50)
+  sortCode Int    @map("sort_code")
+
+  storyCredits StoryCredit[]
+
+  @@map("gcd_credit_type")
+}
+
+model SeriesPublicationType {
+  id    Int    @id @default(autoincrement())
+  name  String @db.VarChar(255)
+  notes String
+
+  series Series[]
+
+  @@map("gcd_series_publication_type")
+}
+
+// ─── Core Domain Models ──────────────────────────────────────────────────────
+
+model Publisher {
+  id        Int    @id @default(autoincrement())
+  name      String @db.VarChar(255)
+  countryId Int    @map("country_id")
+  yearBegan Int?   @map("year_began")
+  yearEnded Int?   @map("year_ended")
+  notes     String
+  url       String @db.VarChar(255)
+  deleted   Int    @db.SmallInt
+
+  country Country  @relation(fields: [countryId], references: [id])
+  series  Series[]
+
+  @@map("gcd_publisher")
+}
+
+model Series {
+  id                Int    @id @default(autoincrement())
+  name              String @db.VarChar(255)
+  sortName          String @map("sort_name") @db.VarChar(255)
+  format            String @db.VarChar(255)
+  yearBegan         Int    @map("year_began")
+  yearBeganUncertain Int   @map("year_began_uncertain") @db.SmallInt
+  yearEnded         Int?   @map("year_ended")
+  yearEndedUncertain Int   @map("year_ended_uncertain") @db.SmallInt
+  publicationDates  String @map("publication_dates") @db.VarChar(255)
+  firstIssueId      Int?   @map("first_issue_id")
+  lastIssueId       Int?   @map("last_issue_id")
+  isCurrent         Int    @map("is_current") @db.SmallInt
+  publisherId       Int    @map("publisher_id")
+  countryId         Int    @map("country_id")
+  languageId        Int    @map("language_id")
+  trackingNotes     String @map("tracking_notes")
+  notes             String
+  hasGallery        Int    @map("has_gallery") @db.SmallInt
+  issueCount        Int    @map("issue_count")
+  created           DateTime
+  modified          DateTime
+  deleted           Int    @db.SmallInt
+  hasIndiciaFrequency Int  @map("has_indicia_frequency") @db.SmallInt
+  hasIsbn           Int    @map("has_isbn") @db.SmallInt
+  hasBarcode        Int    @map("has_barcode") @db.SmallInt
+  hasIssueTitle     Int    @map("has_issue_title") @db.SmallInt
+  hasVolume         Int    @map("has_volume") @db.SmallInt
+  isComicsPublication Int  @map("is_comics_publication") @db.SmallInt
+  color             String @db.VarChar(255)
+  dimensions        String @db.VarChar(255)
+  paperStock        String @map("paper_stock") @db.VarChar(255)
+  binding           String @db.VarChar(255)
+  publishingFormat  String @map("publishing_format") @db.VarChar(255)
+  hasRating         Int    @map("has_rating") @db.SmallInt
+  publicationTypeId Int?   @map("publication_type_id")
+  isSingleton       Int    @map("is_singleton") @db.SmallInt
+  hasAboutComics    Int    @map("has_about_comics") @db.SmallInt
+  hasIndiciaPrinter Int    @map("has_indicia_printer") @db.SmallInt
+  hasPublisherCodeNumber Int @map("has_publisher_code_number") @db.SmallInt
+
+  publisher       Publisher              @relation(fields: [publisherId], references: [id])
+  country         Country                @relation(fields: [countryId], references: [id])
+  language        Language               @relation(fields: [languageId], references: [id])
+  publicationType SeriesPublicationType? @relation(fields: [publicationTypeId], references: [id])
+  issues          Issue[]
+
+  @@map("gcd_series")
+}
+
+model Issue {
+  id                     Int      @id @default(autoincrement())
+  number                 String   @db.VarChar(50)
+  volume                 String   @db.VarChar(50)
+  noVolume               Int      @map("no_volume") @db.SmallInt
+  displayVolumeWithNumber Int     @map("display_volume_with_number") @db.SmallInt
+  seriesId               Int      @map("series_id")
+  indiciaPublisherId     Int?     @map("indicia_publisher_id")
+  indiciaPubNotPrinted   Int      @map("indicia_pub_not_printed") @db.SmallInt
+  brandId                Int?     @map("brand_id")
+  noBrand                Int      @map("no_brand") @db.SmallInt
+  publicationDate        String   @map("publication_date") @db.VarChar(255)
+  keyDate                String   @map("key_date") @db.VarChar(10)
+  sortCode               Int      @map("sort_code")
+  price                  String   @db.VarChar(255)
+  pageCount              Decimal? @map("page_count") @db.Decimal(10, 3)
+  pageCountUncertain     Int      @map("page_count_uncertain") @db.SmallInt
+  indiciaFrequency       String   @map("indicia_frequency") @db.VarChar(255)
+  noIndiciaFrequency     Int      @map("no_indicia_frequency") @db.SmallInt
+  editing                String
+  noEditing              Int      @map("no_editing") @db.SmallInt
+  notes                  String
+  created                DateTime
+  modified               DateTime
+  deleted                Int      @db.SmallInt
+  isIndexed              Int      @map("is_indexed") @db.SmallInt
+  isbn                   String   @db.VarChar(32)
+  validIsbn              String   @map("valid_isbn") @db.VarChar(13)
+  noIsbn                 Int      @map("no_isbn") @db.SmallInt
+  variantOfId            Int?     @map("variant_of_id")
+  variantName            String   @map("variant_name") @db.VarChar(255)
+  barcode                String   @db.VarChar(38)
+  noBarcode              Int      @map("no_barcode") @db.SmallInt
+  title                  String   @db.VarChar(255)
+  noTitle                Int      @map("no_title") @db.SmallInt
+  onSaleDate             String   @map("on_sale_date") @db.VarChar(10)
+  onSaleDateUncertain    Int      @map("on_sale_date_uncertain") @db.SmallInt
+  rating                 String   @db.VarChar(255)
+  noRating               Int      @map("no_rating") @db.SmallInt
+  volumeNotPrinted       Int      @map("volume_not_printed") @db.SmallInt
+  indiciaPrinterNotPrinted Int    @map("indicia_printer_not_printed") @db.SmallInt
+  variantCoverStatus     Int      @map("variant_cover_status")
+  indiciaPrinterSourcedBy String  @map("indicia_printer_sourced_by") @db.VarChar(255)
+
+  series    Series  @relation(fields: [seriesId], references: [id])
+  variantOf Issue?  @relation("IssueVariants", fields: [variantOfId], references: [id])
+  variants  Issue[] @relation("IssueVariants")
+  stories   Story[]
+
+  @@unique([seriesId, sortCode])
+  @@map("gcd_issue")
+}
+
+model Story {
+  id                Int      @id @default(autoincrement())
+  title             String   @db.VarChar(255)
+  titleInferred     Int      @map("title_inferred") @db.SmallInt
+  feature           String   @db.VarChar(255)
+  sequenceNumber    Int      @map("sequence_number")
+  pageCount         Decimal? @map("page_count") @db.Decimal(10, 3)
+  issueId           Int      @map("issue_id")
+  script            String
+  pencils           String
+  inks              String
+  colors            String
+  letters           String
+  editing           String
+  genre             String   @db.VarChar(255)
+  characters        String
+  synopsis          String
+  reprintNotes      String   @map("reprint_notes")
+  created           DateTime
+  modified          DateTime
+  notes             String
+  noScript          Int      @map("no_script") @db.SmallInt
+  noPencils         Int      @map("no_pencils") @db.SmallInt
+  noInks            Int      @map("no_inks") @db.SmallInt
+  noColors          Int      @map("no_colors") @db.SmallInt
+  noLetters         Int      @map("no_letters") @db.SmallInt
+  noEditing         Int      @map("no_editing") @db.SmallInt
+  pageCountUncertain Int     @map("page_count_uncertain") @db.SmallInt
+  typeId            Int      @map("type_id")
+  jobNumber         String   @map("job_number") @db.VarChar(25)
+  deleted           Int      @db.SmallInt
+  firstLine         String   @map("first_line") @db.VarChar(255)
+
+  issue   Issue         @relation(fields: [issueId], references: [id])
+  type    StoryType     @relation(fields: [typeId], references: [id])
+  credits StoryCredit[]
+
+  @@map("gcd_story")
+}
+
+model StoryCredit {
+  id           Int      @id @default(autoincrement())
+  created      DateTime
+  modified     DateTime
+  deleted      Int      @db.SmallInt
+  isCredited   Int      @map("is_credited") @db.SmallInt
+  isSigned     Int      @map("is_signed") @db.SmallInt
+  uncertain    Int      @db.SmallInt
+  signedAs     String   @map("signed_as") @db.VarChar(255)
+  creditedAs   String   @map("credited_as") @db.VarChar(255)
+  creditName   String   @map("credit_name") @db.VarChar(255)
+  creatorId    Int      @map("creator_id")
+  creditTypeId Int      @map("credit_type_id")
+  storyId      Int      @map("story_id")
+  signatureId  Int?     @map("signature_id")
+  isSourced    Int      @map("is_sourced") @db.SmallInt
+  sourcedBy    String   @map("sourced_by") @db.VarChar(255)
+
+  creatorNameDetail CreatorNameDetail @relation(fields: [creatorId], references: [id])
+  creditType        CreditType        @relation(fields: [creditTypeId], references: [id])
+  story             Story             @relation(fields: [storyId], references: [id])
+
+  @@map("gcd_story_credit")
+}
+
+model Creator {
+  id                     Int      @id @default(autoincrement())
+  gcdOfficialName        String   @map("gcd_official_name") @db.VarChar(255)
+  whosWho                String?  @map("whos_who") @db.VarChar(200)
+  birthCountryUncertain  Int      @map("birth_country_uncertain") @db.SmallInt
+  birthProvince          String   @map("birth_province") @db.VarChar(50)
+  birthProvinceUncertain Int      @map("birth_province_uncertain") @db.SmallInt
+  birthCity              String   @map("birth_city") @db.VarChar(200)
+  birthCityUncertain     Int      @map("birth_city_uncertain") @db.SmallInt
+  deathCountryUncertain  Int      @map("death_country_uncertain") @db.SmallInt
+  deathProvince          String   @map("death_province") @db.VarChar(50)
+  deathProvinceUncertain Int      @map("death_province_uncertain") @db.SmallInt
+  deathCity              String   @map("death_city") @db.VarChar(200)
+  deathCityUncertain     Int      @map("death_city_uncertain") @db.SmallInt
+  bio                    String
+  notes                  String
+  created                DateTime
+  modified               DateTime
+  deleted                Int      @db.SmallInt
+  birthCountryId         Int?     @map("birth_country_id")
+  birthDateId            Int?     @map("birth_date_id")
+  deathCountryId         Int?     @map("death_country_id")
+  deathDateId            Int?     @map("death_date_id")
+  sortName               String   @map("sort_name") @db.VarChar(255)
+  disambiguation         String   @db.VarChar(255)
+
+  birthCountry Country?           @relation("BirthCountry", fields: [birthCountryId], references: [id])
+  deathCountry Country?           @relation("DeathCountry", fields: [deathCountryId], references: [id])
+  nameDetails  CreatorNameDetail[]
+
+  @@map("gcd_creator")
+}
+
+model CreatorNameDetail {
+  id             Int      @id @default(autoincrement())
+  name           String   @db.VarChar(255)
+  created        DateTime
+  modified       DateTime
+  deleted        Int      @db.SmallInt
+  creatorId      Int      @map("creator_id")
+  typeId         Int?     @map("type_id")
+  sortName       String   @map("sort_name") @db.VarChar(255)
+  isOfficialName Int      @map("is_official_name") @db.SmallInt
+  inScriptId     Int      @map("in_script_id")
+  familyName     String   @map("family_name") @db.VarChar(255)
+  givenName      String   @map("given_name") @db.VarChar(255)
+
+  creator      Creator       @relation(fields: [creatorId], references: [id])
+  storyCredits StoryCredit[]
+
+  @@map("gcd_creator_name_detail")
+}
