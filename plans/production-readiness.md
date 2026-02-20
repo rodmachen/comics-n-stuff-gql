@@ -162,9 +162,9 @@ These double as documentation and as the starting point for each frontend app's 
 
 ---
 
-## Phase 3 — Nice-to-have (before public launch)
+## Phase 3 — Nice-to-have (before public launch) ✅ COMPLETE
 
-### 12. Dockerfile + deployment config
+### 12. ✅ Dockerfile + deployment config
 Multi-stage Dockerfile for production Node builds. Required for Railway, Render, or Fly.io deployment.
 - Multi-stage build: compile TypeScript in build stage, copy only `dist/` + production `node_modules` to runtime stage
 - Use `node:24-alpine` as runtime base
@@ -172,14 +172,20 @@ Multi-stage Dockerfile for production Node builds. Required for Railway, Render,
 
 **Files:** `Dockerfile` (new), `.dockerignore` (new), `package.json`
 
-### 13. Tests
-Zero coverage currently. Add Vitest + integration tests for resolver logic, pagination, and error handling.
+### 13. ✅ Tests
+Vitest added with 27 tests covering schema validation, input validation, pagination clamping, and error handling.
 
-### 14. ESLint
-TypeScript strict is on but ESLint catches unhandled promise rejections and unsafe patterns.
+**Files:** `src/__tests__/schema.test.ts` (new), `src/__tests__/validation.test.ts` (new), `package.json`
 
-### 15. README
-Document setup, env variables, Supabase deployment steps, Railway deployment steps, and point to `schema.graphql` and `operations/` for frontend teams.
+### 14. ✅ ESLint
+ESLint with `typescript-eslint` configured. Enforces `no-floating-promises`, `no-misused-promises`, and `no-unused-vars` (with `_` prefix exception).
+
+**Files:** `eslint.config.js` (new), `package.json`
+
+### 15. ✅ README
+Documents setup, env variables, scripts, Supabase deployment, Docker usage, schema/operations for frontend teams, and architecture overview.
+
+**Files:** `README.md` (new)
 
 ---
 
@@ -199,10 +205,10 @@ Document setup, env variables, Supabase deployment steps, Railway deployment ste
 | 9 | Structured logging | ✅ Done |
 | 10 | Generate schema.graphql + print-schema script | ✅ Done |
 | 11 | Example operations files | ✅ Done |
-| 12 | Dockerfile + API platform deploy | Pending |
-| 13 | Tests | Pending |
-| 14 | ESLint | Pending |
-| 15 | README | Pending |
+| 12 | Dockerfile + API platform deploy | ✅ Done |
+| 13 | Tests | ✅ Done |
+| 14 | ESLint | ✅ Done |
+| 15 | README | ✅ Done |
 
 ---
 

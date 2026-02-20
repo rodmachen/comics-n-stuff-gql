@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+*.sql
+.git
+.gitignore
+plans
+operations
+schema.graphql
+README.md
