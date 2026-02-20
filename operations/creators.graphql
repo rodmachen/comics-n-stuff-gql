@@ -1,0 +1,40 @@
+query SearchCreators($search: String!, $limit: Int, $offset: Int) {
+  creators(search: $search, limit: $limit, offset: $offset) {
+    items {
+      id
+      gcdOfficialName
+      sortName
+    }
+    totalCount
+  }
+}
+
+query GetCreator($id: Int!) {
+  creator(id: $id) {
+    id
+    gcdOfficialName
+    sortName
+    birthCity
+    birthProvince
+    deathCity
+    deathProvince
+    bio
+    notes
+    disambiguation
+    birthCountry {
+      id
+      name
+    }
+    deathCountry {
+      id
+      name
+    }
+    nameDetails {
+      id
+      name
+      isOfficialName
+      familyName
+      givenName
+    }
+  }
+}

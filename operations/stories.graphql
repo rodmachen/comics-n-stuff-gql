@@ -1,0 +1,66 @@
+query GetStoriesForIssue($issueId: Int!, $limit: Int, $offset: Int) {
+  stories(issueId: $issueId, limit: $limit, offset: $offset) {
+    items {
+      id
+      title
+      feature
+      sequenceNumber
+      pageCount
+      genre
+      characters
+      synopsis
+      type {
+        name
+      }
+    }
+    totalCount
+  }
+}
+
+query GetStory($id: Int!) {
+  story(id: $id) {
+    id
+    title
+    feature
+    sequenceNumber
+    pageCount
+    script
+    pencils
+    inks
+    colors
+    letters
+    editing
+    genre
+    characters
+    synopsis
+    firstLine
+    jobNumber
+    issue {
+      id
+      number
+      series {
+        id
+        name
+      }
+    }
+    type {
+      name
+    }
+    credits {
+      id
+      isCredited
+      creditName
+      creditedAs
+      creditType {
+        name
+      }
+      creatorNameDetail {
+        name
+        creator {
+          id
+          gcdOfficialName
+        }
+      }
+    }
+  }
+}

@@ -134,9 +134,9 @@ All relationship resolvers now use DataLoader instead of individual Prisma calls
 
 ---
 
-## Phase 2.5 — API Contract Artifacts (required before frontend repos start)
+## Phase 2.5 — API Contract Artifacts (required before frontend repos start) ✅ COMPLETE
 
-### 10. Generate and commit schema.graphql
+### 10. ✅ Generate and commit schema.graphql
 All three Apollo clients (web/TypeScript, iOS/Swift, Android/Kotlin) use code generation to produce typed models and query hooks from the schema. They can introspect a live server, but a **static `schema.graphql` file** is far more reliable — codegen runs without a live server, Claude can read it directly when planning frontend work, and it version-controls the API contract.
 
 - Add a `generate:schema` npm script that prints the SDL from the running Apollo Server:
@@ -149,7 +149,7 @@ All three Apollo clients (web/TypeScript, iOS/Swift, Android/Kotlin) use code ge
 
 **Files:** `schema.graphql` (new, generated), `src/scripts/print-schema.ts` (new), `package.json`
 
-### 11. Example operations files
+### 11. ✅ Example operations files
 Beyond the schema, each frontend app needs **named `.graphql` operation files** (the actual queries they'll run) to generate typed hooks. Create a shared `operations/` directory with example operations covering all use cases:
 - `operations/series.graphql` — `SearchSeries`, `GetSeries`, `SeriesByPublisher`
 - `operations/issues.graphql` — `GetIssues`, `IssuesByKeyDate`, `IssuesByOnSaleDate`, `GetIssue`
@@ -197,8 +197,8 @@ Document setup, env variables, Supabase deployment steps, Railway deployment ste
 | 7 | Query depth limiting | ✅ Done |
 | 8 | Input validation | ✅ Done |
 | 9 | Structured logging | ✅ Done |
-| 10 | Generate schema.graphql + print-schema script | Pending |
-| 11 | Example operations files | Pending |
+| 10 | Generate schema.graphql + print-schema script | ✅ Done |
+| 11 | Example operations files | ✅ Done |
 | 12 | Dockerfile + API platform deploy | Pending |
 | 13 | Tests | Pending |
 | 14 | ESLint | Pending |

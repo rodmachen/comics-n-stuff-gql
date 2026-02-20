@@ -1,0 +1,70 @@
+query SearchSeries($search: String!, $limit: Int, $offset: Int) {
+  allSeries(search: $search, limit: $limit, offset: $offset) {
+    items {
+      id
+      name
+      yearBegan
+      yearEnded
+      issueCount
+      publisher {
+        id
+        name
+      }
+    }
+    totalCount
+  }
+}
+
+query GetSeries($id: Int!) {
+  series(id: $id) {
+    id
+    name
+    sortName
+    format
+    yearBegan
+    yearEnded
+    publicationDates
+    issueCount
+    color
+    dimensions
+    binding
+    publishingFormat
+    publisher {
+      id
+      name
+    }
+    country {
+      id
+      name
+    }
+    language {
+      id
+      name
+    }
+    publicationType {
+      id
+      name
+    }
+    issues(limit: 100) {
+      id
+      number
+      title
+      publicationDate
+      keyDate
+    }
+  }
+}
+
+query SeriesByPublisher($publisherId: Int!, $limit: Int, $offset: Int) {
+  allSeries(publisherId: $publisherId, limit: $limit, offset: $offset) {
+    items {
+      id
+      name
+      yearBegan
+      yearEnded
+      issueCount
+      format
+    }
+    totalCount
+  }
+}

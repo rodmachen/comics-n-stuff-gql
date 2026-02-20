@@ -1,0 +1,96 @@
+query GetIssues($seriesId: Int, $limit: Int, $offset: Int) {
+  issues(seriesId: $seriesId, limit: $limit, offset: $offset) {
+    items {
+      id
+      number
+      title
+      publicationDate
+      keyDate
+      onSaleDate
+      series {
+        id
+        name
+      }
+    }
+    totalCount
+  }
+}
+
+query IssuesByKeyDate($keyDate: String!, $limit: Int, $offset: Int) {
+  issues(keyDate: $keyDate, limit: $limit, offset: $offset) {
+    items {
+      id
+      number
+      title
+      keyDate
+      series {
+        id
+        name
+      }
+    }
+    totalCount
+  }
+}
+
+query IssuesByOnSaleDate($onSaleDate: String!, $limit: Int, $offset: Int) {
+  issues(onSaleDate: $onSaleDate, limit: $limit, offset: $offset) {
+    items {
+      id
+      number
+      title
+      onSaleDate
+      series {
+        id
+        name
+      }
+    }
+    totalCount
+  }
+}
+
+query GetIssue($id: Int!) {
+  issue(id: $id) {
+    id
+    number
+    volume
+    title
+    publicationDate
+    keyDate
+    price
+    pageCount
+    isbn
+    barcode
+    onSaleDate
+    rating
+    variantName
+    editing
+    notes
+    sortCode
+    series {
+      id
+      name
+      publisher {
+        id
+        name
+      }
+    }
+    variantOf {
+      id
+      number
+    }
+    variants {
+      id
+      number
+      variantName
+    }
+    stories {
+      id
+      title
+      feature
+      sequenceNumber
+      type {
+        name
+      }
+    }
+  }
+}
