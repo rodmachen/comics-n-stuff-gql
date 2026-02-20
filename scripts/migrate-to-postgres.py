@@ -11,7 +11,7 @@ import sys
 import os
 import tempfile
 
-DUMP_FILE = "comics-db-2026-02-01.sql"
+DUMP_FILE = "2026-02-15.sql"
 DB_NAME = "comics_gcd"
 DC_PUBLISHER_ID = 54
 PSQL = "/opt/homebrew/opt/postgresql@17/bin/psql"

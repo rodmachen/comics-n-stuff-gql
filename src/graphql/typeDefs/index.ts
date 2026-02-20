@@ -152,27 +152,54 @@ export const typeDefs = `#graphql
     creator: Creator!
   }
 
+  # ─── Connection Types (paginated lists with totalCount) ───────────────────
+
+  type PublisherConnection {
+    items: [Publisher!]!
+    totalCount: Int!
+  }
+
+  type SeriesConnection {
+    items: [Series!]!
+    totalCount: Int!
+  }
+
+  type IssueConnection {
+    items: [Issue!]!
+    totalCount: Int!
+  }
+
+  type StoryConnection {
+    items: [Story!]!
+    totalCount: Int!
+  }
+
+  type CreatorConnection {
+    items: [Creator!]!
+    totalCount: Int!
+  }
+
   # ─── Queries ──────────────────────────────────────────────────────────────
 
   type Query {
     # Publishers
-    publishers(limit: Int, offset: Int, search: String): [Publisher!]!
+    publishers(limit: Int, offset: Int, search: String): PublisherConnection!
     publisher(id: Int!): Publisher
 
     # Series
-    allSeries(limit: Int, offset: Int, search: String, publisherId: Int): [Series!]!
+    allSeries(limit: Int, offset: Int, search: String, publisherId: Int): SeriesConnection!
     series(id: Int!): Series
 
     # Issues
-    issues(limit: Int, offset: Int, seriesId: Int): [Issue!]!
+    issues(limit: Int, offset: Int, seriesId: Int, keyDate: String, onSaleDate: String): IssueConnection!
     issue(id: Int!): Issue
 
     # Stories
-    stories(limit: Int, offset: Int, issueId: Int): [Story!]!
+    stories(limit: Int, offset: Int, issueId: Int): StoryConnection!
     story(id: Int!): Story
 
     # Creators
-    creators(limit: Int, offset: Int, search: String): [Creator!]!
+    creators(limit: Int, offset: Int, search: String): CreatorConnection!
     creator(id: Int!): Creator
 
     # Reference types

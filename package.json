@@ -14,12 +14,20 @@
   },
   "dependencies": {
     "@apollo/server": "^5.4.0",
-    "@prisma/client": "^6.3.0",
-    "graphql": "^16.9.0"
+    "@as-integrations/express5": "^1.1.2",
+    "@prisma/adapter-pg": "^7.4.1",
+    "@prisma/client": "^7.4.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "graphql": "^16.9.0",
+    "pg": "^8.18.0"
   },
   "devDependencies": {
     "@types/node": "^22.13.1",
-    "prisma": "^6.3.0",
+    "@types/pg": "^8.16.0",
+    "prisma": "^7.4.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }
