@@ -1,5 +1,7 @@
 import { GraphQLError } from "graphql";
 import { prisma } from "../../lib/prisma.js";
+import { logger } from "../../lib/logger.js";
+import type { Context } from "../../lib/context.js";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
@@ -18,16 +20,52 @@ function intToBool(val: number): boolean {
   return val === 1;
 }
 
+const MAX_SEARCH_LENGTH = 200;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function validateSearch(search?: string): void {
+  if (search && search.length > MAX_SEARCH_LENGTH) {
+    throw new GraphQLError(
+      `Search string must be ${MAX_SEARCH_LENGTH} characters or fewer.`,
+      { extensions: { code: "BAD_USER_INPUT" } }
+    );
+  }
+}
+
+function validateDate(value: string | undefined, fieldName: string): void {
+  if (value && !DATE_PATTERN.test(value)) {
+    throw new GraphQLError(
+      `${fieldName} must be in YYYY-MM-DD format.`,
+      { extensions: { code: "BAD_USER_INPUT" } }
+    );
+  }
+}
+
+function validatePagination(limit?: number, offset?: number): void {
+  if (limit !== undefined && (limit < 1 || limit > MAX_LIMIT)) {
+    throw new GraphQLError(
+      `limit must be between 1 and ${MAX_LIMIT}.`,
+      { extensions: { code: "BAD_USER_INPUT" } }
+    );
+  }
+  if (offset !== undefined && offset < 0) {
+    throw new GraphQLError(
+      `offset must be non-negative.`,
+      { extensions: { code: "BAD_USER_INPUT" } }
+    );
+  }
+}
+
 // Wrap any async resolver to catch unhandled errors
 function withErrorHandling<TParent, TArgs, TResult>(
-  fn: (parent: TParent, args: TArgs) => Promise<TResult>
-): (parent: TParent, args: TArgs) => Promise<TResult> {
-  return async (parent, args) => {
+  fn: (parent: TParent, args: TArgs, context: Context) => Promise<TResult>
+): (parent: TParent, args: TArgs, context: Context) => Promise<TResult> {
+  return async (parent, args, context) => {
     try {
-      return await fn(parent, args);
+      return await fn(parent, args, context);
     } catch (err) {
       if (err instanceof GraphQLError) throw err;
-      console.error(err);
+      logger.error({ err }, "Unhandled resolver error");
       throw new GraphQLError("An internal error occurred.", {
         extensions: { code: "INTERNAL_SERVER_ERROR" },
       });
@@ -53,6 +91,8 @@ export const resolvers = {
       _,
       { limit, offset, search }: SearchArgs
     ) => {
+      validatePagination(limit, offset);
+      validateSearch(search);
       const where = {
         deleted: 0,
         ...(search && {
@@ -80,6 +120,8 @@ export const resolvers = {
       _,
       { limit, offset, search, publisherId }: SearchArgs & { publisherId?: number }
     ) => {
+      validatePagination(limit, offset);
+      validateSearch(search);
       const where = {
         deleted: 0,
         ...(search && {
@@ -112,6 +154,9 @@ export const resolvers = {
         onSaleDate?: string;
       }
     ) => {
+      validatePagination(limit, offset);
+      validateDate(keyDate, "keyDate");
+      validateDate(onSaleDate, "onSaleDate");
       const where = {
         deleted: 0,
         variantOfId: null as null,
@@ -140,6 +185,7 @@ export const resolvers = {
       _,
       { limit, offset, issueId }: PaginationArgs & { issueId?: number }
     ) => {
+      validatePagination(limit, offset);
       const where = {
         deleted: 0,
         ...(issueId && { issueId }),
@@ -162,6 +208,8 @@ export const resolvers = {
 
     // Creators
     creators: withErrorHandling(async (_, { limit, offset, search }: SearchArgs) => {
+      validatePagination(limit, offset);
+      validateSearch(search);
       const where = {
         deleted: 0,
         ...(search && {
@@ -214,17 +262,14 @@ export const resolvers = {
   // ─── Relationship Resolvers ───────────────────────────────────────────────
 
   Publisher: {
-    country: withErrorHandling(async (parent: { id: number }) => {
-      const result = await prisma.publisher.findUnique({
-        where: { id: parent.id },
-        include: { country: true },
-      });
-      if (!result?.country) {
-        throw new GraphQLError(`Country not found for publisher ${parent.id}`, {
+    country: withErrorHandling(async (parent: { countryId: number }, _args, { loaders }) => {
+      const country = await loaders.country.load(parent.countryId);
+      if (!country) {
+        throw new GraphQLError(`Country not found for publisher`, {
           extensions: { code: "NOT_FOUND" },
         });
       }
-      return result.country;
+      return country;
     }),
     series: withErrorHandling(async (
       parent: { id: number },
@@ -240,22 +285,18 @@ export const resolvers = {
   },
 
   Series: {
-    publisher: withErrorHandling(async (parent: { publisherId: number }) => {
-      return prisma.publisher.findUnique({
-        where: { id: parent.publisherId },
-      });
+    publisher: withErrorHandling(async (parent: { publisherId: number }, _args, { loaders }) => {
+      return loaders.publisher.load(parent.publisherId);
     }),
-    country: withErrorHandling(async (parent: { countryId: number }) => {
-      return prisma.country.findUnique({ where: { id: parent.countryId } });
+    country: withErrorHandling(async (parent: { countryId: number }, _args, { loaders }) => {
+      return loaders.country.load(parent.countryId);
     }),
-    language: withErrorHandling(async (parent: { languageId: number }) => {
-      return prisma.language.findUnique({ where: { id: parent.languageId } });
+    language: withErrorHandling(async (parent: { languageId: number }, _args, { loaders }) => {
+      return loaders.language.load(parent.languageId);
     }),
-    publicationType: withErrorHandling(async (parent: { publicationTypeId: number | null }) => {
+    publicationType: withErrorHandling(async (parent: { publicationTypeId: number | null }, _args, { loaders }) => {
       if (!parent.publicationTypeId) return null;
-      return prisma.seriesPublicationType.findUnique({
-        where: { id: parent.publicationTypeId },
-      });
+      return loaders.seriesPublicationType.load(parent.publicationTypeId);
     }),
     issues: withErrorHandling(async (
       parent: { id: number },
@@ -271,42 +312,30 @@ export const resolvers = {
   },
 
   Issue: {
-    series: withErrorHandling(async (parent: { seriesId: number }) => {
-      return prisma.series.findUnique({ where: { id: parent.seriesId } });
+    series: withErrorHandling(async (parent: { seriesId: number }, _args, { loaders }) => {
+      return loaders.series.load(parent.seriesId);
     }),
-    variantOf: withErrorHandling(async (parent: { variantOfId: number | null }) => {
+    variantOf: withErrorHandling(async (parent: { variantOfId: number | null }, _args, { loaders }) => {
       if (!parent.variantOfId) return null;
-      return prisma.issue.findUnique({ where: { id: parent.variantOfId } });
+      return loaders.issue.load(parent.variantOfId);
     }),
-    variants: withErrorHandling(async (parent: { id: number }) => {
-      return prisma.issue.findMany({
-        where: { variantOfId: parent.id, deleted: 0 },
-      });
+    variants: withErrorHandling(async (parent: { id: number }, _args, { loaders }) => {
+      return loaders.variantsByIssueId.load(parent.id);
     }),
-    stories: withErrorHandling(async (
-      parent: { id: number },
-      { limit, offset }: PaginationArgs
-    ) => {
-      return prisma.story.findMany({
-        where: { issueId: parent.id, deleted: 0 },
-        take: clampLimit(limit),
-        skip: clampOffset(offset),
-        orderBy: { sequenceNumber: "asc" },
-      });
+    stories: withErrorHandling(async (parent: { id: number }, _args, { loaders }) => {
+      return loaders.storiesByIssueId.load(parent.id);
     }),
   },
 
   Story: {
-    issue: withErrorHandling(async (parent: { issueId: number }) => {
-      return prisma.issue.findUnique({ where: { id: parent.issueId } });
+    issue: withErrorHandling(async (parent: { issueId: number }, _args, { loaders }) => {
+      return loaders.issue.load(parent.issueId);
     }),
-    type: withErrorHandling(async (parent: { typeId: number }) => {
-      return prisma.storyType.findUnique({ where: { id: parent.typeId } });
+    type: withErrorHandling(async (parent: { typeId: number }, _args, { loaders }) => {
+      return loaders.storyType.load(parent.typeId);
     }),
-    credits: withErrorHandling(async (parent: { id: number }) => {
-      return prisma.storyCredit.findMany({
-        where: { storyId: parent.id, deleted: 0 },
-      });
+    credits: withErrorHandling(async (parent: { id: number }, _args, { loaders }) => {
+      return loaders.creditsByStoryId.load(parent.id);
     }),
   },
 
@@ -315,46 +344,36 @@ export const resolvers = {
       intToBool(parent.isCredited),
     isSigned: (parent: { isSigned: number }) => intToBool(parent.isSigned),
     uncertain: (parent: { uncertain: number }) => intToBool(parent.uncertain),
-    creatorNameDetail: withErrorHandling(async (parent: { creatorId: number }) => {
-      return prisma.creatorNameDetail.findUnique({
-        where: { id: parent.creatorId },
-      });
+    creatorNameDetail: withErrorHandling(async (parent: { creatorId: number }, _args, { loaders }) => {
+      return loaders.creatorNameDetail.load(parent.creatorId);
     }),
-    creditType: withErrorHandling(async (parent: { creditTypeId: number }) => {
-      return prisma.creditType.findUnique({
-        where: { id: parent.creditTypeId },
-      });
+    creditType: withErrorHandling(async (parent: { creditTypeId: number }, _args, { loaders }) => {
+      return loaders.creditType.load(parent.creditTypeId);
     }),
-    story: withErrorHandling(async (parent: { storyId: number }) => {
-      return prisma.story.findUnique({ where: { id: parent.storyId } });
+    story: withErrorHandling(async (parent: { storyId: number }, _args, { loaders }) => {
+      return loaders.story.load(parent.storyId);
     }),
   },
 
   Creator: {
-    birthCountry: withErrorHandling(async (parent: { birthCountryId: number | null }) => {
+    birthCountry: withErrorHandling(async (parent: { birthCountryId: number | null }, _args, { loaders }) => {
       if (!parent.birthCountryId) return null;
-      return prisma.country.findUnique({
-        where: { id: parent.birthCountryId },
-      });
+      return loaders.country.load(parent.birthCountryId);
     }),
-    deathCountry: withErrorHandling(async (parent: { deathCountryId: number | null }) => {
+    deathCountry: withErrorHandling(async (parent: { deathCountryId: number | null }, _args, { loaders }) => {
       if (!parent.deathCountryId) return null;
-      return prisma.country.findUnique({
-        where: { id: parent.deathCountryId },
-      });
+      return loaders.country.load(parent.deathCountryId);
     }),
-    nameDetails: withErrorHandling(async (parent: { id: number }) => {
-      return prisma.creatorNameDetail.findMany({
-        where: { creatorId: parent.id, deleted: 0 },
-      });
+    nameDetails: withErrorHandling(async (parent: { id: number }, _args, { loaders }) => {
+      return loaders.nameDetailsByCreatorId.load(parent.id);
     }),
   },
 
   CreatorNameDetail: {
     isOfficialName: (parent: { isOfficialName: number }) =>
       intToBool(parent.isOfficialName),
-    creator: withErrorHandling(async (parent: { creatorId: number }) => {
-      return prisma.creator.findUnique({ where: { id: parent.creatorId } });
+    creator: withErrorHandling(async (parent: { creatorId: number }, _args, { loaders }) => {
+      return loaders.creator.load(parent.creatorId);
     }),
   },
 
