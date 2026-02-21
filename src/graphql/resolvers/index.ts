@@ -146,10 +146,38 @@ export const resolvers = {
     }),
 
     // Issues
+    searchIssues: withErrorHandling(async (
+      _,
+      { search, issueNumber, limit, offset }: SearchArgs & { issueNumber: string }
+    ) => {
+      validatePagination(limit, offset);
+      validateSearch(search);
+      const where = {
+        deleted: 0,
+        variantOfId: null as null,
+        number: issueNumber,
+        series: {
+          name: { contains: search, mode: "insensitive" as const },
+          deleted: 0,
+        },
+      };
+      const [items, totalCount] = await prisma.$transaction([
+        prisma.issue.findMany({
+          take: clampLimit(limit),
+          skip: clampOffset(offset),
+          where,
+          orderBy: { sortCode: "asc" },
+        }),
+        prisma.issue.count({ where }),
+      ]);
+      return { items, totalCount };
+    }),
+
     issues: withErrorHandling(async (
       _,
-      { limit, offset, seriesId, keyDate, onSaleDate }: PaginationArgs & {
+      { limit, offset, seriesId, issueNumber, keyDate, onSaleDate }: PaginationArgs & {
         seriesId?: number;
+        issueNumber?: string;
         keyDate?: string;
         onSaleDate?: string;
       }
@@ -161,6 +189,7 @@ export const resolvers = {
         deleted: 0,
         variantOfId: null as null,
         ...(seriesId && { seriesId }),
+        ...(issueNumber && { number: issueNumber }),
         ...(keyDate && { keyDate }),
         ...(onSaleDate && { onSaleDate }),
       };

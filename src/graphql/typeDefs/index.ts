@@ -191,7 +191,8 @@ export const typeDefs = `#graphql
     series(id: Int!): Series
 
     # Issues
-    issues(limit: Int, offset: Int, seriesId: Int, keyDate: String, onSaleDate: String): IssueConnection!
+    searchIssues(search: String!, issueNumber: String!, limit: Int, offset: Int): IssueConnection!
+    issues(limit: Int, offset: Int, seriesId: Int, issueNumber: String, keyDate: String, onSaleDate: String): IssueConnection!
     issue(id: Int!): Issue
 
     # Stories
