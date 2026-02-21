@@ -39,6 +39,10 @@ const corsOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(",").map((o) => o.trim())
   : "*";
 
+app.get("/health", (_, res) => {
+  res.json({ status: "ok" });
+});
+
 app.use(
   "/graphql",
   cors<cors.CorsRequest>({ origin: corsOrigins }),

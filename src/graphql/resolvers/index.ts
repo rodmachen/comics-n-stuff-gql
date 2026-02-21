@@ -348,9 +348,6 @@ export const resolvers = {
       if (!parent.variantOfId) return null;
       return loaders.issue.load(parent.variantOfId);
     }),
-    variants: withErrorHandling(async (parent: { id: number }, _args, { loaders }) => {
-      return loaders.variantsByIssueId.load(parent.id);
-    }),
     stories: withErrorHandling(async (parent: { id: number }, _args, { loaders }) => {
       return loaders.storiesByIssueId.load(parent.id);
     }),

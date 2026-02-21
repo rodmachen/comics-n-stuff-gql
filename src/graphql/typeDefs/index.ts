@@ -87,7 +87,6 @@ export const typeDefs = `#graphql
     sortCode: Int!
     series: Series!
     variantOf: Issue
-    variants: [Issue!]!
     stories(limit: Int, offset: Int): [Story!]!
   }
 

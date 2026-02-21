@@ -96,22 +96,6 @@ export function createLoaders() {
       }
     ),
 
-    variantsByIssueId: new DataLoader<number, Array<{ id: number; [key: string]: unknown }>>(
-      async (issueIds) => {
-        const variants = await prisma.issue.findMany({
-          where: { variantOfId: { in: [...issueIds] }, deleted: 0 },
-        });
-        const map = new Map<number, typeof variants>();
-        for (const variant of variants) {
-          if (variant.variantOfId != null) {
-            const list = map.get(variant.variantOfId) ?? [];
-            list.push(variant);
-            map.set(variant.variantOfId, list);
-          }
-        }
-        return issueIds.map((id) => map.get(id) ?? []);
-      }
-    ),
   };
 }
 

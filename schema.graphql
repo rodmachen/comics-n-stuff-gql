@@ -82,7 +82,6 @@ type Issue {
   sortCode: Int!
   series: Series!
   variantOf: Issue
-  variants: [Issue!]!
   stories(limit: Int, offset: Int): [Story!]!
 }
 
@@ -177,7 +176,8 @@ type Query {
   publisher(id: Int!): Publisher
   allSeries(limit: Int, offset: Int, search: String, publisherId: Int): SeriesConnection!
   series(id: Int!): Series
-  issues(limit: Int, offset: Int, seriesId: Int, keyDate: String, onSaleDate: String): IssueConnection!
+  searchIssues(search: String!, issueNumber: String!, limit: Int, offset: Int): IssueConnection!
+  issues(limit: Int, offset: Int, seriesId: Int, issueNumber: String, keyDate: String, onSaleDate: String): IssueConnection!
   issue(id: Int!): Issue
   stories(limit: Int, offset: Int, issueId: Int): StoryConnection!
   story(id: Int!): Story

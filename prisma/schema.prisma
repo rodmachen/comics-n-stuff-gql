@@ -5,8 +5,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url       = env("postgresql://postgres.rwzvlouetkgnlnemqzmo:pLLD7YKDUEcfscZG@aws-0-us-west-2.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require")
-  directUrl = env("postgresql://postgres:/pLLD7YKDUEcfscZG@db.rwzvlouetkgnlnemqzmo.supabase.co:5432/postgres")
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 // ─── Reference / Lookup Tables ───────────────────────────────────────────────
@@ -179,7 +179,7 @@ model Issue {
 
   series    Series  @relation(fields: [seriesId], references: [id])
   variantOf Issue?  @relation("IssueVariants", fields: [variantOfId], references: [id])
-  variants  Issue[] @relation("IssueVariants")
+  variants  Issue[] @relation("IssueVariants") @ignore
   stories   Story[]
 
   @@unique([seriesId, sortCode])
