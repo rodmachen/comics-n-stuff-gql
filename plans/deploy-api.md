@@ -12,13 +12,9 @@ The `comics-n-stuff-gql` GraphQL API needs to be deployed to production before t
 
 ---
 
-## Step 1: Add a health check endpoint
+## ~~Step 1: Add a health check endpoint~~ ✅ COMPLETED
 
-Railway (and any container platform) needs a health check. Add a `/health` endpoint before the GraphQL middleware.
-
-**File:** `src/index.ts`
-
-Add before the `/graphql` middleware:
+Health check endpoint added to `src/index.ts` before the GraphQL middleware:
 ```typescript
 app.get("/health", (_, res) => {
   res.json({ status: "ok" });
@@ -27,13 +23,9 @@ app.get("/health", (_, res) => {
 
 ---
 
-## Step 2: Fix Prisma schema env vars
+## ~~Step 2: Fix Prisma schema env vars~~ ✅ COMPLETED
 
-The Prisma schema currently has hardcoded connection strings inside `env()` calls. These should reference env var names, not values.
-
-**File:** `prisma/schema.prisma` (lines 8-9)
-
-Change to:
+Prisma schema updated to use env var references instead of hardcoded connection strings:
 ```prisma
 datasource db {
   provider  = "postgresql"
@@ -63,7 +55,7 @@ In Railway's project settings → Variables, add:
 | `DIRECT_DATABASE_URL` | `postgresql://postgres:pLLD7YKDUEcfscZG@db.rwzvlouetkgnlnemqzmo.supabase.co:5432/postgres` |
 | `NODE_ENV` | `production` |
 | `PORT` | `4000` |
-| `CORS_ORIGINS` | `https://dc-decade.vercel.app,http://localhost:3000` |
+| `CORS_ORIGINS` | `https://dcdecade.com,https://dc-decade.vercel.app,http://localhost:3000` |
 | `LOG_LEVEL` | `info` |
 
 ### 3c. Configure networking
@@ -114,22 +106,19 @@ Railway auto-deploys by default when you push to the connected branch (usually `
 
 ---
 
-## Code Changes Required
+## Code Changes Required ✅ COMPLETED
 
-Only two files need changes before deploying:
+Both code changes have been applied:
 
-### 1. `src/index.ts` — add health check
-Add `app.get("/health", ...)` before the GraphQL middleware.
-
-### 2. `prisma/schema.prisma` — fix env var references
-Change hardcoded connection strings to `env("DATABASE_URL")` and `env("DIRECT_DATABASE_URL")`.
+1. `src/index.ts` — health check endpoint added
+2. `prisma/schema.prisma` — env var references fixed
 
 ---
 
 ## Post-Deployment
 
 - **Update `plans/app-strategy.md`** with the production API URL once deployed
-- **Update CORS_ORIGINS** as new frontend domains are added (Vercel preview URLs, etc.)
+- **Update CORS_ORIGINS** as new frontend domains are added (dcdecade.com is the primary domain, plus Vercel preview URLs)
 - **Monitor** via Railway's built-in logs dashboard (Pino JSON logs are searchable)
 - **Database backups** are handled by Supabase (daily automatic backups on free tier)
 
