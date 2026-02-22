@@ -5,6 +5,7 @@ import http from "http";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express5";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
+import { ApolloServerPluginLandingPageLocalDefault, ApolloServerPluginLandingPageProductionDefault } from "@apollo/server/plugin/landingPage/default";
 import depthLimit from "graphql-depth-limit";
 import { typeDefs } from "./graphql/typeDefs/index.js";
 import { resolvers } from "./graphql/resolvers/index.js";
@@ -18,7 +19,12 @@ const server = new ApolloServer({
   typeDefs,
   resolvers,
   validationRules: [depthLimit(15)],
-  plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+  plugins: [
+    ApolloServerPluginDrainHttpServer({ httpServer }),
+    process.env.NODE_ENV === "production"
+      ? ApolloServerPluginLandingPageProductionDefault()
+      : ApolloServerPluginLandingPageLocalDefault({ embed: true }),
+  ],
   formatError: (formattedError, error) => {
     if (formattedError.extensions?.code === "INTERNAL_SERVER_ERROR") {
       logger.error({ err: error }, "Internal server error in resolver");
