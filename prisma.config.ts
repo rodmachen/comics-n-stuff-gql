@@ -9,7 +9,7 @@ export default defineConfig({
   migrations: {
     path: "prisma/migrations",
   },
-  engine: "classic",
+  engine: "wasm",
   datasource: {
     url: process.env.DATABASE_URL ?? "",
     directUrl: process.env.DIRECT_DATABASE_URL ?? "",
