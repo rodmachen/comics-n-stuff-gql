@@ -58,6 +58,12 @@ In Railway's project settings → Variables, add:
 | `CORS_ORIGINS` | `https://dcdecade.com,https://dc-decade.vercel.app,http://localhost:3000` |
 | `LOG_LEVEL` | `info` |
 
+> **[POST-DEPLOY]** Railway's "Suggested Variables" UI pre-fills values from `.env.example` — these are templates, not real credentials. You must manually replace every value with the actual credentials. Do not assume they are set correctly just because they appear populated.
+
+> **[POST-DEPLOY]** The suggested `NODE_ENV` value from `.env.example` is `development`. It must be changed to `production` in Railway or the server will run in dev mode (verbose errors, local Apollo Sandbox instead of production landing page).
+
+> **[POST-DEPLOY]** Double-check `DIRECT_DATABASE_URL` format carefully. A typo of `postgresql://postgres:/password@...` (extra `/` before the password) will cause `ECONNREFUSED` errors that look like a network issue, not a credentials issue. Correct format: `postgresql://postgres:password@host:5432/db`.
+
 ### 3c. Configure networking
 
 In Railway's project settings → Networking:
@@ -121,6 +127,8 @@ Both code changes have been applied:
 - **Update CORS_ORIGINS** as new frontend domains are added (dcdecade.com is the primary domain, plus Vercel preview URLs)
 - **Monitor** via Railway's built-in logs dashboard (Pino JSON logs are searchable)
 - **Database backups** are handled by Supabase (daily automatic backups on free tier)
+
+> **[POST-DEPLOY]** To test the live endpoint from Apollo Studio (`studio.apollographql.com`), either add `https://studio.apollographql.com` to `CORS_ORIGINS`, or temporarily remove `CORS_ORIGINS` entirely so the server defaults to `*`. The `diagnose-endpoint` tool (`npx diagnose-endpoint@1.1.0 --endpoint='...'`) will flag a missing CORS header if the origin isn't allowed.
 
 ---
 
