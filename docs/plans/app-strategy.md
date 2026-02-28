@@ -269,3 +269,11 @@ When the API schema changes: run `sync-schema` to copy it, then `codegen:all`. B
 - All four apps connect to the production API at `https://comics-n-stuff-gql-production.up.railway.app` (not localhost).
 - The web app domain is `dcdecade.com`.
 - The React Native app shares the same codegen toolchain as the web app (`@graphql-codegen/cli`) and the same `tokens.ts` design tokens, making it the most code-similar to the web app while targeting iOS natively.
+
+---
+
+## Credits
+
+All apps should display the following in a footer or credits section:
+
+Copyright @ 2026 Rod Machen | Comics data: [GCD](https://www.comics.org/) | Image data: [Comic Vine](https://comicvine.gamespot.com/)
