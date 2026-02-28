@@ -26,8 +26,8 @@ This document reviews the `comics-n-stuff-gql` codebase against the installed Cl
 | Plan | File | Status |
 |---|---|---|
 | Production Readiness | `production-readiness.md` | **COMPLETE** — all 15 items done |
-| Deploy API (Railway) | `deploy-api.md` | **Code complete** — deployment steps documented, needs execution |
-| Add GIN Trigram Indexes | `add-indexes.md` | **NOT STARTED** |
+| Deploy API (Railway) | `deploy-api.md` | **COMPLETE** — deployed to `comics-n-stuff-gql-production.up.railway.app` |
+| Add GIN Trigram Indexes | `add-indexes.md` | **COMPLETE** — indexes added in `add_indexes` migration |
 | Image Gathering (Comic Vine → Cloudinary) | `image-gathering.md` | **NOT STARTED** |
 | App Strategy (DC Decade 4-platform) | `app-strategy.md` | **NOT STARTED** — blocked by deploy + images |
 | Basic Profile | `Basic Profile.md` | **UNRELATED** — job search template, not part of this project |
@@ -89,24 +89,22 @@ const pool = new Pool({
 
 ## Prioritized Execution Order
 
-### Tier 1 — Deploy (unblocks everything else)
+### ~~Tier 1 — Deploy (unblocks everything else)~~ ✅ COMPLETED
 
-| # | Task | Plan | Effort |
+| # | Task | Plan | Status |
 |---|---|---|---|
-| 1 | **Deploy API to Railway** | `deploy-api.md` | Manual steps — ~30 min |
+| 1 | **Deploy API to Railway** | `deploy-api.md` | ✅ Live at `comics-n-stuff-gql-production.up.railway.app` |
 
-The API must be live before image gathering or client apps can proceed.
+### ~~Tier 2 — Database Performance (do before traffic arrives)~~ ✅ COMPLETED
 
-### Tier 2 — Database Performance (do before traffic arrives)
-
-| # | Task | Plan | Effort |
+| # | Task | Plan | Status |
 |---|---|---|---|
-| 2 | **Add GIN trigram indexes** | `add-indexes.md` | Schema + migration |
-| 3 | **Add FK/filter B-tree indexes** | New (section A above) | Schema + migration |
-| 4 | **Configure connection pool** | New (section C above) | `src/lib/prisma.ts` — small change |
-| 5 | **Fix SSL configuration** | New (section B above) | `src/lib/prisma.ts` — small change |
+| 2 | **Add GIN trigram indexes** | `add-indexes.md` | ✅ Added in `add_indexes` migration |
+| 3 | **Add FK/filter B-tree indexes** | Section A above | ✅ Added in `add_indexes` migration |
+| 4 | **Configure connection pool** | Section C above | ✅ `src/lib/prisma.ts` updated |
+| 5 | **Fix SSL configuration** | Section B above | ✅ `src/lib/prisma.ts` updated |
 
-Items 2 and 3 can be combined into a single migration. Items 4 and 5 are a single file edit.
+Items 2–5 completed together. Migration must be applied to Supabase once the database is accessible.
 
 ### Tier 3 — Content (prerequisite for client apps)
 

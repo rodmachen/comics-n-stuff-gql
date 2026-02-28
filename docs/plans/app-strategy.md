@@ -250,7 +250,7 @@ When the API schema changes: run `sync-schema` to copy it, then `codegen:all`. B
 
 ## Prerequisites (completed before agents start)
 
-1. **API deployed** to production with a public URL
+1. **API deployed** to production at `https://comics-n-stuff-gql-production.up.railway.app`
 2. **Cover images** uploaded to Cloudinary via `plans/image-gathering.md`; `coverImageUrl` populated on issues
 3. **Branding assets** ready: banner image, favicon, and app tile in `shared/assets/`
 4. **Xcode** installed (for both iOS native and React Native agents)
@@ -266,6 +266,6 @@ When the API schema changes: run `sync-schema` to copy it, then `codegen:all`. B
 - Cover images are served from Cloudinary via the `coverImageUrl` field on Issue. Use Cloudinary URL transforms for responsive sizing (e.g., `w_300,h_450,c_fill` for thumbnails).
 - The `searchIssues` query handles the series+issue number search. For creators, use the existing `creators(search:)` query. For series browsing, use `allSeries(search:)`.
 - All four apps are read-only consumers of the deployed API. No mutations needed.
-- All four apps connect to the production API URL (not localhost).
+- All four apps connect to the production API at `https://comics-n-stuff-gql-production.up.railway.app` (not localhost).
 - The web app domain is `dcdecade.com`.
 - The React Native app shares the same codegen toolchain as the web app (`@graphql-codegen/cli`) and the same `tokens.ts` design tokens, making it the most code-similar to the web app while targeting iOS natively.

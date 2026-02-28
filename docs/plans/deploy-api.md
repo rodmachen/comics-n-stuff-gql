@@ -36,7 +36,7 @@ datasource db {
 
 ---
 
-## Step 3: Deploy to Railway
+## ~~Step 3: Deploy to Railway~~ ✅ COMPLETED
 
 ### 3a. Create the project
 
@@ -79,19 +79,19 @@ In Railway's project settings → Deploy:
 
 ---
 
-## Step 4: Verify deployment
+## ~~Step 4: Verify deployment~~ ✅ COMPLETED
 
 Once Railway deploys (typically 1-2 minutes):
 
 1. **Health check:**
    ```
-   curl https://YOUR-APP.up.railway.app/health
+   curl https://comics-n-stuff-gql-production.up.railway.app/health
    ```
    Expected: `{"status":"ok"}`
 
 2. **GraphQL endpoint:**
    ```
-   curl -X POST https://YOUR-APP.up.railway.app/graphql \
+   curl -X POST https://comics-n-stuff-gql-production.up.railway.app/graphql \
      -H "Content-Type: application/json" \
      -d '{"query":"{ publishers(limit: 1) { items { name } totalCount } }"}'
    ```
@@ -99,14 +99,14 @@ Once Railway deploys (typically 1-2 minutes):
 
 3. **Search query:**
    ```
-   curl -X POST https://YOUR-APP.up.railway.app/graphql \
+   curl -X POST https://comics-n-stuff-gql-production.up.railway.app/graphql \
      -H "Content-Type: application/json" \
      -d '{"query":"{ allSeries(search: \"Batman\", limit: 3) { items { name yearBegan } } }"}'
    ```
 
 ---
 
-## Step 5: Enable auto-deploy
+## ~~Step 5: Enable auto-deploy~~ ✅ COMPLETED
 
 Railway auto-deploys by default when you push to the connected branch (usually `main`). Verify this is enabled in Settings → Source.
 
@@ -123,7 +123,7 @@ Both code changes have been applied:
 
 ## Post-Deployment
 
-- **Update `plans/app-strategy.md`** with the production API URL once deployed
+- ~~**Update `plans/app-strategy.md`** with the production API URL once deployed~~ ✅ Done — `https://comics-n-stuff-gql-production.up.railway.app`
 - **Update CORS_ORIGINS** as new frontend domains are added (dcdecade.com is the primary domain, plus Vercel preview URLs)
 - **Monitor** via Railway's built-in logs dashboard (Pino JSON logs are searchable)
 - **Database backups** are handled by Supabase (daily automatic backups on free tier)

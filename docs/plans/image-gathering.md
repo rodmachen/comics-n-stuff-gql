@@ -34,7 +34,7 @@ Since Cloudinary generates any size on demand from the uploaded original, we onl
 
 ## Implementation
 
-### 1. Add fields to Issue model (`prisma/schema.prisma`)
+### 1. Add fields to Issue model (`prisma/schema.prisma`) -- DONE
 
 ```prisma
 model Issue {
@@ -48,11 +48,26 @@ model Issue {
 - `coverImageUrl` — The Cloudinary URL for the cover image
 - `comicVineId` — The Comic Vine issue ID, used for lookups and to avoid re-fetching
 
-### 2. Update GraphQL schema (`src/graphql/typeDefs/index.ts`)
+### 2. Update GraphQL schema (`src/graphql/typeDefs/index.ts`) -- DONE
 
 Add `coverImageUrl: String` to the `Issue` type.
 
-### 3. Create the script (`src/scripts/fetch-covers.ts`)
+### 3. Environment variables (`.env` and `.env.example`) -- DONE
+
+```bash
+COMIC_VINE_API_KEY=your_key_here
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_key
+CLOUDINARY_API_SECRET=your_secret
+```
+
+### 4. Install Cloudinary SDK -- DONE
+
+```bash
+npm install cloudinary
+```
+
+### 5. Create and run the script (`src/scripts/fetch-covers.ts`)
 
 ```
 npm script: "fetch-covers": "tsx src/scripts/fetch-covers.ts"
@@ -74,20 +89,13 @@ Key details:
 - On failure: log the error, skip the issue, continue (re-run later to catch failures)
 - Resumable by design: query only issues WHERE `cover_image_url IS NULL`
 
-### 4. Environment variables (`.env` and `.env.example`)
+**Running the script (~2.7 hours for ~4,800 issues):**
 
 ```bash
-COMIC_VINE_API_KEY=your_key_here
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_key
-CLOUDINARY_API_SECRET=your_secret
+caffeinate -i npm run fetch-covers
 ```
 
-### 5. Install Cloudinary SDK
-
-```bash
-npm install cloudinary
-```
+`caffeinate -i` prevents macOS idle sleep while the script runs, then allows normal sleep again once it finishes. Re-run the same command to retry any failures — it skips already-processed issues.
 
 ## Files Modified/Created
 
@@ -108,8 +116,8 @@ The tricky part is matching GCD issues to Comic Vine issues. The approach:
 
 ## Verification
 
-1. Run `npx prisma migrate dev` to add the new fields
-2. Run `npm run fetch-covers` and verify first 5-10 issues get images
+1. ~~Run `npx prisma migrate dev` to add the new fields~~ — DONE
+2. Run `caffeinate -i npm run fetch-covers` and verify first 5-10 issues get images
 3. Check Cloudinary dashboard for uploaded images
 4. Query the API: `{ issues(seriesId: 141, issueNumber: "319") { items { coverImageUrl } } }`
 5. Re-run the script — it should skip already-processed issues
