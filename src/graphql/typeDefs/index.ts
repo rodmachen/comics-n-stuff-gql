@@ -85,6 +85,7 @@ export const typeDefs = `#graphql
     editing: String!
     notes: String!
     sortCode: Int!
+    coverImageUrl: String
     series: Series!
     variantOf: Issue
     stories(limit: Int, offset: Int): [Story!]!

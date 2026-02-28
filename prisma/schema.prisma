@@ -78,6 +78,8 @@ model Publisher {
   country Country  @relation(fields: [countryId], references: [id])
   series  Series[]
 
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, name: "idx_publisher_name_trgm")
+  @@index([deleted])
   @@map("gcd_publisher")
 }
 
@@ -128,6 +130,9 @@ model Series {
   publicationType SeriesPublicationType? @relation(fields: [publicationTypeId], references: [id])
   issues          Issue[]
 
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, name: "idx_series_name_trgm")
+  @@index([publisherId])
+  @@index([deleted, sortName])
   @@map("gcd_series")
 }
 
@@ -174,6 +179,8 @@ model Issue {
   indiciaPrinterNotPrinted Int    @map("indicia_printer_not_printed") @db.SmallInt
   variantCoverStatus     Int      @map("variant_cover_status")
   indiciaPrinterSourcedBy String  @map("indicia_printer_sourced_by") @db.VarChar(255)
+  coverImageUrl          String? @map("cover_image_url") @db.VarChar(500)
+  comicVineId            Int?    @map("comic_vine_id")
 
   series    Series  @relation(fields: [seriesId], references: [id])
   variantOf Issue?  @relation("IssueVariants", fields: [variantOfId], references: [id])
@@ -181,6 +188,9 @@ model Issue {
   stories   Story[]
 
   @@unique([seriesId, sortCode])
+  @@index([seriesId, deleted, variantOfId])
+  @@index([keyDate])
+  @@index([onSaleDate])
   @@map("gcd_issue")
 }
 
@@ -221,6 +231,7 @@ model Story {
   type    StoryType     @relation(fields: [typeId], references: [id])
   credits StoryCredit[]
 
+  @@index([issueId, deleted])
   @@map("gcd_story")
 }
 
@@ -246,6 +257,8 @@ model StoryCredit {
   creditType        CreditType        @relation(fields: [creditTypeId], references: [id])
   story             Story             @relation(fields: [storyId], references: [id])
 
+  @@index([storyId, deleted])
+  @@index([creatorId])
   @@map("gcd_story_credit")
 }
 
@@ -279,6 +292,8 @@ model Creator {
   deathCountry Country?           @relation("DeathCountry", fields: [deathCountryId], references: [id])
   nameDetails  CreatorNameDetail[]
 
+  @@index([gcdOfficialName(ops: raw("gin_trgm_ops"))], type: Gin, name: "idx_creator_name_trgm")
+  @@index([deleted, sortName])
   @@map("gcd_creator")
 }
 
@@ -299,5 +314,6 @@ model CreatorNameDetail {
   creator      Creator       @relation(fields: [creatorId], references: [id])
   storyCredits StoryCredit[]
 
+  @@index([creatorId, deleted])
   @@map("gcd_creator_name_detail")
 }
