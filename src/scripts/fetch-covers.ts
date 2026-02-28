@@ -62,8 +62,8 @@ interface ComicVineIssue {
   image: { original_url: string; super_url: string };
 }
 
-/** Find volume IDs matching a series name */
-async function getVolumeIds(seriesName: string): Promise<number[]> {
+/** Find volume IDs matching a series name and start year */
+async function getVolumeIds(seriesName: string, yearBegan: number): Promise<number[]> {
   const normalized = normalizeName(seriesName);
 
   // Try exact name first, then variants
@@ -76,20 +76,27 @@ async function getVolumeIds(seriesName: string): Promise<number[]> {
     url.searchParams.set("api_key", COMIC_VINE_API_KEY!);
     url.searchParams.set("format", "json");
     url.searchParams.set("filter", `name:${query}`);
-    url.searchParams.set("field_list", "id,name");
+    url.searchParams.set("field_list", "id,name,start_year");
     url.searchParams.set("limit", "100");
 
     const data = await cvFetch(url.toString());
-    const results: { id: number; name: string }[] = data.results ?? [];
+    const results: { id: number; name: string; start_year: string | null }[] =
+      data.results ?? [];
 
-    // Exact or normalized match
-    const ids = results
-      .filter(
-        (v) =>
-          v.name.toLowerCase() === query.toLowerCase() ||
-          normalizeName(v.name) === normalized
-      )
-      .map((v) => v.id);
+    // Filter by name match (exact or normalized)
+    const nameMatches = results.filter(
+      (v) =>
+        v.name.toLowerCase() === query.toLowerCase() ||
+        normalizeName(v.name) === normalized
+    );
+
+    // Prefer volumes whose start_year matches yearBegan (±2 years)
+    const yearMatches = nameMatches.filter(
+      (v) => v.start_year && Math.abs(parseInt(v.start_year) - yearBegan) <= 2
+    );
+
+    const best = yearMatches.length > 0 ? yearMatches : nameMatches;
+    const ids = best.map((v) => v.id);
 
     if (ids.length > 0) return ids;
 
@@ -137,7 +144,7 @@ interface DbIssue {
   id: number;
   number: string;
   keyDate: string;
-  series: { id: number; name: string };
+  series: { id: number; name: string; yearBegan: number };
 }
 
 async function main() {
@@ -176,7 +183,7 @@ async function main() {
 
     try {
       // Step 1: Find volume IDs (1 API call, cached by name normalization)
-      const volumeIds = await getVolumeIds(seriesName);
+      const volumeIds = await getVolumeIds(seriesName, seriesIssues[0].series.yearBegan);
 
       if (volumeIds.length === 0) {
         console.log(`  No volume found on Comic Vine, skipping series`);
@@ -236,6 +243,7 @@ async function main() {
           const uploadResult = await cloudinary.uploader.upload(imageUrl, {
             folder: "comics-n-stuff",
             public_id: `issue-${issue.id}`,
+            transformation: { width: 2048, crop: "limit" },
           });
 
           await prisma.issue.update({
