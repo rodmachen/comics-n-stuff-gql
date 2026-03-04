@@ -1,4 +1,4 @@
---- Skipped (114) ---
+--- Skipped Issues (114) ---
   The Daring New Adventures of Supergirl #1
   The Daring New Adventures of Supergirl #4
   The Daring New Adventures of Supergirl #5
