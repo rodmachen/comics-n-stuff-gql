@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --version:*)",
+      "Bash(npm --version:*)",
+      "WebFetch(domain:www.prisma.io)",
+      "WebFetch(domain:pris.ly)",
+      "WebSearch",
+      "Bash(npm install:*)",
+      "Bash(psql:*)",
+      "Bash(brew list:*)",
+      "Bash(brew services list:*)",
+      "Bash(/opt/homebrew/opt/postgresql@17/bin/psql:*)",
+      "Bash(/opt/homebrew/opt/postgresql@17/bin/createdb:*)",
+      "Bash(python3:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node -e:*)",
+      "WebFetch(domain:www.apollographql.com)",
+      "Bash(timeout 5 npx tsx:*)",
+      "Bash(npm ls:*)",
+      "Bash(timeout 10 npx tsx:*)",
+      "Bash(npm run generate:schema:*)",
+      "Bash(npm test)",
+      "Bash(npm run lint)",
+      "Bash(npm run build:*)",
+      "Bash(echo Server not running or not reachable:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:comicvine.gamespot.com)",
+      "Bash(head:*)",
+      "Bash(wc:*)",
+      "WebFetch(domain:josephephillips.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.raymondcamden.com)",
+      "Bash(npx prisma:*)",
+      "Bash(claude:*)",
+      "Bash(grep:*)",
+      "Bash(DATABASE_URL=\"postgresql://rodmachen@localhost:5432/comics_gcd\" DIRECT_DATABASE_URL=\"postgresql://rodmachen@localhost:5432/comics_gcd\" npx prisma:*)",
+      "Bash(source:*)",
+      "Bash(npx tsx:*)",
+      "Bash(test:*)"
+    ]
+  }
+}

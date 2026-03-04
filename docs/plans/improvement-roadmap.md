@@ -106,13 +106,11 @@ const pool = new Pool({
 
 Items 2–5 completed together. Migration must be applied to Supabase once the database is accessible.
 
-### Tier 3 — Content (prerequisite for client apps)
+### ~~Tier 3 — Content (prerequisite for client apps)~~ ✅ COMPLETED
 
-| # | Task | Plan | Effort |
+| # | Task | Plan | Status |
 |---|---|---|---|
-| 6 | **Gather cover images** | `image-gathering.md` | Script + multi-hour batch run |
-
-Requires: deployed API (#1), Comic Vine API key, Cloudinary account.
+| 6 | **Gather cover images** | `image-gathering.md` | ✅ Cover images fetched and stored in Cloudinary |
 
 ### Tier 4 — Client Apps (the big build)
 
