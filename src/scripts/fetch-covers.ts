@@ -287,12 +287,12 @@ async function main() {
             if (cvIssues.length === 1) {
               candidates = [cvIssues[0]];
             } else {
-              candidates = cvLookup.get("1") ?? null;
+              candidates = cvLookup.get("1") ?? undefined;
             }
           } else if (/^[A-Z]+\s+\d+$/i.test(num)) {
             // Strip alpha prefix: "SF 1" -> "1"
             const stripped = num.replace(/^[A-Z]+\s+/i, "");
-            candidates = cvLookup.get(stripped) ?? null;
+            candidates = cvLookup.get(stripped) ?? undefined;
           }
         }
 
