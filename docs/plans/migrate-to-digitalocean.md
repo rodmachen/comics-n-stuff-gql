@@ -111,7 +111,7 @@ Actions:
 
 ---
 
-## Step 2 — DNS + Docker Compose skeleton (Postgres, PgBouncer, Caddy) ✅ authored; pending droplet deployment
+## Step 2 — DNS + Docker Compose skeleton (Postgres, PgBouncer, Caddy) ✅
 
 **Model/Effort**: **Sonnet / high**
 **Justification**: PgBouncer transaction-pool mode with Prisma has a known footgun (prepared statements); Caddy TLS needs correct DNS-first sequencing. Medium-high ambiguity because choices here constrain later steps — wrong pool mode breaks Prisma, wrong Caddy config leaves HTTPS broken until the next deploy.
