@@ -1,0 +1,6 @@
+# Step 2: placeholder until the API container is wired up in Step 4.
+# Caddy acquires a Let's Encrypt cert for api.dcdecade.com on first startup.
+# Replace the respond directive with reverse_proxy api:4000 in Step 4.
+api.dcdecade.com {
+    respond "ok" 200
+}

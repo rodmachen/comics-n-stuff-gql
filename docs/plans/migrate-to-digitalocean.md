@@ -111,7 +111,7 @@ Actions:
 
 ---
 
-## Step 2 — DNS + Docker Compose skeleton (Postgres, PgBouncer, Caddy)
+## Step 2 — DNS + Docker Compose skeleton (Postgres, PgBouncer, Caddy) ✅ authored; pending droplet deployment
 
 **Model/Effort**: **Sonnet / high**
 **Justification**: PgBouncer transaction-pool mode with Prisma has a known footgun (prepared statements); Caddy TLS needs correct DNS-first sequencing. Medium-high ambiguity because choices here constrain later steps — wrong pool mode breaks Prisma, wrong Caddy config leaves HTTPS broken until the next deploy.
@@ -120,7 +120,8 @@ Actions:
 **Files modified** (new):
 - `ops/compose/docker-compose.yml`
 - `ops/compose/Caddyfile`
-- `ops/compose/pgbouncer/userlist.txt` (gitignored; templated)
+- `ops/compose/pgbouncer/userlist.txt.example` (template; real file is gitignored)
+- `ops/compose/postgres/init/00-init.sh` (creates DB, role, pg_trgm extension)
 - `ops/compose/pgbouncer/pgbouncer.ini`
 - `ops/compose/.env.example`
 - `.gitignore` (add `ops/compose/.env`, `ops/compose/pgbouncer/userlist.txt`)

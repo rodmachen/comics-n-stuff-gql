@@ -1,0 +1,15 @@
+# PgBouncer userlist.txt — EXAMPLE ONLY
+# Copy this file to userlist.txt (gitignored) and replace with real SCRAM-SHA-256 hashes.
+#
+# How to generate the hash:
+#   1. Start only the postgres service:
+#        docker compose up -d postgres
+#   2. The init script creates comics_app with COMICS_APP_PASSWORD from .env.
+#   3. Extract the stored hash:
+#        docker exec postgres psql -U postgres -tAc \
+#          "SELECT passwd FROM pg_shadow WHERE usename = 'comics_app';"
+#   4. Copy the output (starts with SCRAM-SHA-256$...) and paste below.
+#
+# Format: "username" "SCRAM-SHA-256$<iterations>:<salt>$<StoredKey>:<ServerKey>"
+
+"comics_app" "SCRAM-SHA-256$4096:REPLACE_WITH_ACTUAL_HASH_FROM_PG_SHADOW"

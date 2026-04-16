@@ -9,3 +9,8 @@ dist
 
 # Large database dumps
 *.sql
+
+# Docker Compose secrets (ops/compose/)
+ops/compose/.env
+ops/compose/pgbouncer/userlist.txt
+ops/compose/pgbouncer/tls/
