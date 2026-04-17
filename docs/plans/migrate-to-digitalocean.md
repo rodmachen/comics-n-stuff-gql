@@ -214,27 +214,29 @@ Actions:
 
 ## Step 5 — Decommission Supabase + Railway (deferred — waiting 48h post-cutover)
 
-> **Note**: Step 4 went live 2026-04-17. Proceeding to Step 6 first; will return to Step 5 after 48h of stable traffic (on or after 2026-04-19).
+> **Note**: Step 4 went live 2026-04-17. Step 6 completed first; returning to Step 5 on or after 2026-04-19.
+> `docs/plans/deploy-api.md` already has its "Superseded" note (added in Step 4 — no action needed there).
 
 **Model/Effort**: **Haiku / medium**
 **Justification**: Simple cleanup, but includes destructive actions (deleting the Supabase project) that must only happen after confirming Step 4 is stable. Mechanical, low ambiguity.
 **Context-clear**: no
 **TDD/tests-alongside**: n/a
 **Files modified**:
-- `.env.example` — remove Supabase-specific vars, replace with droplet-shaped example
-- `docs/plans/deploy-api.md` — mark "Superseded by `compressed-whistling-mountain.md`"
-- Optional: `README.md` hosting section if one exists
+- `.env.example` — replace Supabase-specific vars with droplet-shaped equivalents (see current file for what to remove: `DATABASE_URL` pooler shape, `DIRECT_DATABASE_URL`, `DB_POOL_SIZE`)
+- `README.md` — update Environment Variables table: remove `DATABASE_URL` (Supabase pooler description) and `DIRECT_DATABASE_URL` rows; replace with droplet connection shape (`postgres://comics_app:password@api.dcdecade.com:6432/comics_gcd?sslmode=require`)
 
 Actions:
-1. **After 48h stable** on droplet with real frontend traffic:
+1. **Ops (user performs manually — not a code commit)**:
    - Delete the Railway service (`railway.app` dashboard)
    - Take a final `pg_dump` of the Supabase DB to laptop as a belt-and-braces backup, then delete the Supabase project
-2. Remove Supabase references from `.env.example` and any docs
+2. **Code changes** (commit on feature branch):
+   - Update `.env.example`: remove `DATABASE_URL` (Supabase pooler URL), `DIRECT_DATABASE_URL`, `DB_POOL_SIZE`; add `DATABASE_URL` with droplet/PgBouncer shape and a comment explaining `sslmode=require`
+   - Update `README.md` Environment Variables table to match
 
 **Verify**:
 - Railway dashboard shows no running service
 - Supabase dashboard shows no active project
-- `grep -r supabase` in repo returns only historical-doc references (deploy-api.md), not active config
+- `grep -ri supabase .env.example README.md` returns no matches
 
 ---
 
