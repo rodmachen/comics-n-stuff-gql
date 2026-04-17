@@ -6,7 +6,7 @@
 #   bash scripts/load-to-remote.sh
 #
 # Prerequisites:
-#   - SSH key access to the droplet as rod@142.93.202.59
+#   - SSH key at ~/.ssh/droplet with access to the droplet as rod@142.93.202.59
 #   - scripts/dc-comics-postgres.sql present (output of migrate-to-postgres.py)
 #   - docker compose stack running on the droplet (docker compose ps shows postgres healthy)
 #
@@ -16,13 +16,16 @@
 set -euo pipefail
 
 DROPLET="rod@142.93.202.59"
+SSH_KEY="$HOME/.ssh/droplet"
+SSH="ssh -i $SSH_KEY"
+SCP="scp -i $SSH_KEY"
 SQL_FILE="scripts/dc-comics-postgres.sql"
 MIGRATION_1="prisma/migrations/20260227180905_add_indexes/migration.sql"
 MIGRATION_2="prisma/migrations/20260227181500_add_cover_image_fields/migration.sql"
-PSQL_CMD="docker exec -i postgres psql -U postgres -d comics_gcd"
 
 log()  { echo ""; echo "==> $*"; }
 step() { echo ""; echo "──────────────────────────────────────────"; echo "  $*"; echo "──────────────────────────────────────────"; }
+psql_remote() { $SSH "$DROPLET" "docker exec -i postgres psql -U postgres -d comics_gcd $*"; }
 
 # ── Preflight ──────────────────────────────────────────────────────────────────
 step "Preflight checks"
@@ -30,38 +33,39 @@ step "Preflight checks"
 [[ -f "$SQL_FILE" ]]    || { echo "ERROR: $SQL_FILE not found. Run scripts/migrate-to-postgres.py first."; exit 1; }
 [[ -f "$MIGRATION_1" ]] || { echo "ERROR: $MIGRATION_1 not found."; exit 1; }
 [[ -f "$MIGRATION_2" ]] || { echo "ERROR: $MIGRATION_2 not found."; exit 1; }
+[[ -f "$SSH_KEY" ]]     || { echo "ERROR: SSH key $SSH_KEY not found."; exit 1; }
 
 echo "SQL file:     $SQL_FILE ($(du -sh "$SQL_FILE" | cut -f1))"
 echo "Migration 1:  $MIGRATION_1"
 echo "Migration 2:  $MIGRATION_2"
-echo "Target:       $DROPLET"
+echo "Target:       $DROPLET (key: $SSH_KEY)"
 
 log "Checking Postgres is healthy on droplet..."
-ssh "$DROPLET" "docker exec postgres pg_isready -U postgres" \
+$SSH "$DROPLET" "docker exec postgres pg_isready -U postgres" \
   || { echo "ERROR: Postgres not ready. Check docker compose on the droplet."; exit 1; }
 echo "Postgres is ready."
 
 # ── Phase 1: Upload SQL file ───────────────────────────────────────────────────
 step "Phase 1: Upload SQL file"
 echo "Copying $SQL_FILE → droplet:/tmp/dc-comics-postgres.sql"
-scp "$SQL_FILE" "$DROPLET:/tmp/dc-comics-postgres.sql"
+$SCP "$SQL_FILE" "$DROPLET:/tmp/dc-comics-postgres.sql"
 echo "Upload complete."
 
 # ── Phase 2: Load data ────────────────────────────────────────────────────────
 step "Phase 2: Load GCD data into Postgres"
 echo "Running psql inside the postgres container (this takes a few minutes)..."
-ssh "$DROPLET" "docker exec -i postgres psql -U postgres -d comics_gcd -f /tmp/dc-comics-postgres.sql"
+$SSH "$DROPLET" "cat /tmp/dc-comics-postgres.sql | docker exec -i postgres psql -U postgres -d comics_gcd"
 echo "Data load complete."
 
 # ── Phase 3: Apply Prisma migrations ──────────────────────────────────────────
 step "Phase 3: Apply Prisma migrations"
 
 log "Applying 20260227180905_add_indexes..."
-ssh "$DROPLET" "$PSQL_CMD" < "$MIGRATION_1"
+psql_remote < "$MIGRATION_1"
 echo "Migration 1 applied."
 
 log "Applying 20260227181500_add_cover_image_fields..."
-ssh "$DROPLET" "$PSQL_CMD" < "$MIGRATION_2"
+psql_remote < "$MIGRATION_2"
 echo "Migration 2 applied."
 
 # Record migrations in _prisma_migrations so the API container doesn't re-apply them.
@@ -70,7 +74,7 @@ log "Recording migrations in _prisma_migrations..."
 CHECKSUM_1=$(openssl dgst -sha256 "$MIGRATION_1" | awk '{print $2}')
 CHECKSUM_2=$(openssl dgst -sha256 "$MIGRATION_2" | awk '{print $2}')
 
-ssh "$DROPLET" "$PSQL_CMD" <<SQL
+psql_remote <<SQL
 CREATE TABLE IF NOT EXISTS "_prisma_migrations" (
     "id"                    VARCHAR(36)  NOT NULL,
     "checksum"              VARCHAR(64)  NOT NULL,
@@ -96,14 +100,14 @@ echo "Migrations recorded."
 
 # ── Phase 4: ANALYZE ──────────────────────────────────────────────────────────
 step "Phase 4: ANALYZE"
-ssh "$DROPLET" "docker exec postgres psql -U postgres -d comics_gcd -c 'ANALYZE;'"
+$SSH "$DROPLET" "docker exec postgres psql -U postgres -d comics_gcd -c 'ANALYZE;'"
 echo "ANALYZE complete."
 
 # ── Phase 5: Verify ───────────────────────────────────────────────────────────
 step "Phase 5: Verification"
 
 log "Row counts:"
-ssh "$DROPLET" "docker exec postgres psql -U postgres -d comics_gcd -c \"
+$SSH "$DROPLET" "docker exec postgres psql -U postgres -d comics_gcd -c \"
 SELECT relname AS table, n_live_tup AS rows
 FROM pg_stat_user_tables
 WHERE schemaname = 'public' AND n_live_tup > 0
@@ -111,10 +115,10 @@ ORDER BY n_live_tup DESC;
 \""
 
 log "GIN index check (idx_series_name_trgm):"
-ssh "$DROPLET" "docker exec postgres psql -U postgres -d comics_gcd -c '\di+ idx_series_name_trgm'"
+$SSH "$DROPLET" "docker exec postgres psql -U postgres -d comics_gcd -c '\di+ idx_series_name_trgm'"
 
 log "Sample trigram search (should use GIN index):"
-ssh "$DROPLET" "docker exec postgres psql -U postgres -d comics_gcd -c \"
+$SSH "$DROPLET" "docker exec postgres psql -U postgres -d comics_gcd -c \"
 EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
 SELECT id, name FROM gcd_series
 WHERE name %> 'Batman'
@@ -124,7 +128,7 @@ LIMIT 10;
 
 # ── Cleanup ───────────────────────────────────────────────────────────────────
 step "Cleanup"
-ssh "$DROPLET" "rm -f /tmp/dc-comics-postgres.sql"
+$SSH "$DROPLET" "rm -f /tmp/dc-comics-postgres.sql"
 echo "Removed /tmp/dc-comics-postgres.sql from droplet."
 
 echo ""

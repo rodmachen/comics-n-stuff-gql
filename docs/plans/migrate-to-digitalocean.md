@@ -148,7 +148,7 @@ Actions:
 
 ---
 
-## Step 3 — Migrate GCD data into the droplet's Postgres
+## Step 3 — Migrate GCD data into the droplet's Postgres ✅
 
 **Model/Effort**: **Sonnet / high**
 **Justification**: Data correctness is load-bearing for the entire application; mistakes compound (bad import → broken GraphQL queries → no way to verify App behavior). Re-running `migrate-to-postgres.py` is well-understood, but the *target* is now a remote droplet with pooling, which changes error surface. Also need to re-apply Prisma migrations (trigram GIN indexes + cover image fields) and verify index integrity.
