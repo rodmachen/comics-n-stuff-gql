@@ -212,7 +212,9 @@ Actions:
 
 ---
 
-## Step 5 — Decommission Supabase + Railway
+## Step 5 — Decommission Supabase + Railway (deferred — waiting 48h post-cutover)
+
+> **Note**: Step 4 went live 2026-04-17. Proceeding to Step 6 first; will return to Step 5 after 48h of stable traffic (on or after 2026-04-19).
 
 **Model/Effort**: **Haiku / medium**
 **Justification**: Simple cleanup, but includes destructive actions (deleting the Supabase project) that must only happen after confirming Step 4 is stable. Mechanical, low ambiguity.
@@ -236,7 +238,7 @@ Actions:
 
 ---
 
-## Step 6 — Ops baseline (backups, monitoring, update workflow)
+## Step 6 — Ops baseline (backups, monitoring, update workflow) ✅
 
 **Model/Effort**: **Sonnet / high**
 **Justification**: Three sub-pieces (backups, monitoring, GH-Actions auto-deploy). The GH-Actions deploy adds real surface: secret management, SSH key generation/restriction, idempotent rebuild script, rollback path. Each is load-bearing for either recovery or daily iteration — silent failures here only surface during incidents. Justifies high effort.

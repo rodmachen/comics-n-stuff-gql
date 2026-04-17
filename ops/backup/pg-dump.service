@@ -1,0 +1,13 @@
+[Unit]
+Description=Postgres weekly backup
+Documentation=file:///opt/stack/ops/backup/pg-dump.sh
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=rod
+ExecStart=/opt/stack/ops/backup/pg-dump.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pg-dump

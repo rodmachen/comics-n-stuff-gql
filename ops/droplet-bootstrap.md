@@ -89,3 +89,100 @@ sudo ufw status                        # shows 22/80/443/6432 allowed
 docker run hello-world                 # Hello from Docker!
 sudo systemctl status fail2ban         # active (running)
 ```
+
+---
+
+## 8. Deploy SSH key (for GitHub Actions auto-deploy)
+
+Generate a dedicated keypair on the droplet (Ed25519, no passphrase):
+
+```bash
+ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/deploy_key -N ""
+```
+
+Add the public key to `~/.ssh/authorized_keys` with a **restricted command** so it
+can only run the deploy script and nothing else:
+
+```bash
+echo "command=\"cd /opt/stack && git pull && docker compose -f ops/compose/docker-compose.yml up -d --build api\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding $(cat ~/.ssh/deploy_key.pub)" >> ~/.ssh/authorized_keys
+```
+
+Print the private key to copy into the GitHub Actions secret (`DEPLOY_SSH_KEY`):
+
+```bash
+cat ~/.ssh/deploy_key
+```
+
+Add these three secrets to the GitHub repo
+(`Settings → Secrets and variables → Actions → New repository secret`):
+
+| Secret name      | Value                            |
+|------------------|----------------------------------|
+| `DEPLOY_SSH_KEY` | contents of `~/.ssh/deploy_key`  |
+| `DROPLET_HOST`   | droplet IP or hostname           |
+| `DROPLET_USER`   | `rod`                            |
+
+**Test the restriction** — this must fail with "Permission denied" or "forced command":
+
+```bash
+ssh -i ~/.ssh/deploy_key rod@<droplet-ip> ls
+```
+
+And this must succeed (runs the deploy command):
+
+```bash
+ssh -i ~/.ssh/deploy_key rod@<droplet-ip>
+```
+
+> **Note**: The repo at `/opt/stack` must be cloned before the deploy key works.
+> Clone it once manually: `git clone https://github.com/<owner>/comics-n-stuff-gql.git /opt/stack`
+> For a private repo, use a GitHub deploy key or HTTPS token in the remote URL.
+
+---
+
+## 9. Backup setup
+
+`comics_gcd` is **static data** — no scheduled backup is needed. Its source of truth
+is `2026-02-15.sql` + `scripts/migrate-to-postgres.py`.
+
+For any future personal databases on this droplet, install the weekly backup timer:
+
+```bash
+# Copy units from repo
+sudo cp /opt/stack/ops/backup/pg-dump.service /etc/systemd/system/
+sudo cp /opt/stack/ops/backup/pg-dump.timer /etc/systemd/system/
+
+# Create backup directory
+sudo mkdir -p /var/backups/postgres
+sudo chown rod:rod /var/backups/postgres
+
+# Enable and start the timer
+sudo systemctl daemon-reload
+sudo systemctl enable --now pg-dump.timer
+sudo systemctl list-timers pg-dump.timer
+```
+
+Manual test run:
+
+```bash
+bash /opt/stack/ops/backup/pg-dump.sh
+ls -lh /var/backups/postgres/
+```
+
+---
+
+## 10. Monitoring — disk check MOTD
+
+Install the disk-check script so it runs at every SSH login:
+
+```bash
+sudo cp /opt/stack/ops/monitoring/disk-check.sh /etc/update-motd.d/99-disk-check
+sudo chmod +x /etc/update-motd.d/99-disk-check
+```
+
+Test it (exits 0 when below threshold, exits 1 and prints warning when at or above):
+
+```bash
+bash /etc/update-motd.d/99-disk-check        # real threshold (80%)
+bash /etc/update-motd.d/99-disk-check 1      # force warning for testing
+```
