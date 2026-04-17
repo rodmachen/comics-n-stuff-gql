@@ -43,7 +43,7 @@ services:
     container_name: api
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgres://comics_app:${COMICS_APP_PASSWORD}@postgres:5432/comics_gcd
+      DATABASE_URL: postgres://comics_app:${COMICS_APP_PASSWORD}@postgres:5432/comics_gcd?sslmode=disable
       NODE_ENV: production
       LOG_LEVEL: info
       PORT: "4000"
