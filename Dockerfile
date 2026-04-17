@@ -9,7 +9,7 @@ RUN npm ci
 COPY tsconfig.json prisma.config.ts ./
 COPY prisma ./prisma
 COPY src ./src
-RUN rm -rf ./src/scripts
+RUN rm -rf ./src/scripts  # one-off scripts pull in extra deps; exclude from production image
 
 RUN npx prisma generate
 RUN npm run build

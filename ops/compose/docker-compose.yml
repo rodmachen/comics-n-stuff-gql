@@ -26,7 +26,7 @@ services:
       - backend
 
   pgbouncer:
-    image: edoburu/pgbouncer:latest
+    image: edoburu/pgbouncer:v1.25.1-p0
     container_name: pgbouncer
     restart: unless-stopped
     volumes:

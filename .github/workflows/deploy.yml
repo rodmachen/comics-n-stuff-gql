@@ -11,6 +11,11 @@ on:
     types: [completed]
     branches: [main]
 
+# Prevent concurrent deploys — if two pushes land quickly, queue rather than race.
+concurrency:
+  group: deploy-droplet
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: Deploy to droplet
@@ -18,15 +23,25 @@ jobs:
     if: github.event.workflow_run.conclusion == 'success'
 
     steps:
-      - name: Deploy via restricted SSH key
+      - name: Write deploy key
         run: |
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
+
+      - name: Pin droplet host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.DROPLET_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy via restricted SSH key
+        run: |
           ssh -i /tmp/deploy_key \
-              -o StrictHostKeyChecking=no \
               -o BatchMode=yes \
               ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}
-          rm -f /tmp/deploy_key
+
+      - name: Remove deploy key
+        if: always()
+        run: rm -f /tmp/deploy_key
 
       - name: Smoke-test /health
         run: |
