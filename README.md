@@ -15,8 +15,7 @@ npm run dev             # http://localhost:4000/graphql
 
 | Variable | Description |
 |---|---|
-| `DATABASE_URL` | Supabase pooler URL (port 6543, `pgbouncer=true&sslmode=no-verify`) |
-| `DIRECT_DATABASE_URL` | Supabase direct URL (port 5432, for Prisma migrations) |
+| `DATABASE_URL` | PgBouncer URL (DigitalOcean droplet, requires `sslmode=require` for TLS) |
 | `PORT` | Server port (default: `4000`) |
 | `CORS_ORIGINS` | Comma-separated allowed origins (default: `*`) |
 | `NODE_ENV` | `development` or `production` |
@@ -59,14 +58,14 @@ The [`operations/`](./operations/) directory contains named `.graphql` operation
 
 Frontend apps can copy these as a starting point for their own codegen configs.
 
-## Database (Supabase)
+## Database (DigitalOcean)
 
-The PostgreSQL database is hosted on Supabase. Key setup notes:
+The PostgreSQL database runs in Docker on a DigitalOcean droplet, accessed via **PgBouncer** on port 6432 with TLS. Key setup notes:
 
-- Use the **transaction pooler** URL (port 6543) for `DATABASE_URL`
-- Use the **direct connection** URL (port 5432) for `DIRECT_DATABASE_URL` and for `pg_dump`/`psql` imports
-- Connection strings must use `sslmode=no-verify` (not `sslmode=require`) to avoid TLS certificate errors
-- The Prisma adapter requires creating a `pg.Pool` with `ssl: { rejectUnauthorized: false }` — passing SSL options directly to `PrismaPg` does not work
+- Use the **PgBouncer pooler** URL (port 6432) for all connections — it handles connection pooling and transaction boundaries
+- TLS is required; use `sslmode=require` in all connection strings
+- The Let's Encrypt certificate is auto-provisioned by Caddy and rotated automatically
+- For local development, you can optionally test against the production droplet or set up a local Postgres instance with the same schema
 
 ## Docker
 
@@ -84,7 +83,7 @@ The Dockerfile uses a multi-stage build: TypeScript compiles in the build stage,
 - **`src/index.ts`** — Express + Apollo Server setup, CORS, error formatting
 - **`src/graphql/typeDefs/`** — GraphQL schema with connection types
 - **`src/graphql/resolvers/`** — All resolvers with error handling, pagination, variant filtering
-- **`src/lib/prisma.ts`** — Prisma singleton with pg Pool for Supabase SSL
+- **`src/lib/prisma.ts`** — Prisma singleton with pg Pool for TLS
 - **`src/lib/loaders.ts`** — DataLoader factory (N+1 fix)
 - **`src/lib/logger.ts`** — Pino structured logging
 - **`src/lib/context.ts`** — Apollo context type

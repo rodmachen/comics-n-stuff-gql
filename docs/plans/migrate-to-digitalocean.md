@@ -212,7 +212,7 @@ Actions:
 
 ---
 
-## Step 5 — Decommission Supabase + Railway (deferred — waiting 48h post-cutover)
+## Step 5 — Decommission Supabase + Railway (deferred — waiting 48h post-cutover) ✅
 
 > **Note**: Step 4 went live 2026-04-17. Step 6 completed first; returning to Step 5 on or after 2026-04-19.
 > `docs/plans/deploy-api.md` already has its "Superseded" note (added in Step 4 — no action needed there).
