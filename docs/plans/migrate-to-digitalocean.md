@@ -177,7 +177,7 @@ Actions:
 
 ---
 
-## Step 4 — Deploy API container on droplet + DNS cutover
+## Step 4 — Deploy API container on droplet + DNS cutover ✅
 
 **Model/Effort**: **Sonnet / medium**
 **Justification**: The existing `Dockerfile` already works (deployed on Railway). Moving it into the droplet's Compose stack is mechanical. Main risk is env-var mistakes (credentials, CORS), which are easy to diagnose.

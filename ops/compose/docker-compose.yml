@@ -36,6 +36,30 @@ services:
     networks:
       - backend
 
+  api:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://comics_app:${COMICS_APP_PASSWORD}@postgres:5432/comics_gcd
+      NODE_ENV: production
+      LOG_LEVEL: info
+      PORT: "4000"
+      CORS_ORIGINS: ${CORS_ORIGINS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - backend
+
   caddy:
     image: caddy:2
     container_name: caddy
@@ -48,6 +72,9 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
     networks:
       - backend
 
