@@ -57,7 +57,7 @@ Supabase's free tier caps at 2 active projects. Adding a third personal project 
 
 ---
 
-## Step 0 — Project init, branch setup, and CI bootstrap
+## Step 0 — Project init, branch setup, and CI bootstrap ✅
 
 **Model/Effort**: **Sonnet / medium**
 **Justification**: Mostly routine (branch, PR), but **the repo has no `.github/workflows/` today** — CI must be added before any implementation per the global workflow rules. A CI workflow is simple but has enough correctness surface (Node version, Prisma generate, env stubs) that Haiku is under-tooled. Not novel enough for high effort.
@@ -85,7 +85,7 @@ Actions:
 
 ---
 
-## Step 1 — Droplet provisioning & SSH hardening
+## Step 1 — Droplet provisioning & SSH hardening ✅
 
 **Model/Effort**: **Sonnet / medium**
 **Justification**: Well-trodden Linux ops but mistakes here have outsized blast radius (exposed SSH, broken firewall). Worth careful execution; not novel enough for high effort.
