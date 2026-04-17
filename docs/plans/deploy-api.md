@@ -1,5 +1,7 @@
 # Plan: Deploy API to Railway
 
+> **Superseded** by `docs/plans/migrate-to-digitalocean.md`. The API is now deployed as an `api` service in the Docker Compose stack on the DigitalOcean droplet, behind Caddy at `api.dcdecade.com`. Railway has been decommissioned.
+
 ## Context
 
 The `comics-n-stuff-gql` GraphQL API needs to be deployed to production before the DC Decade client apps can be built. The API is Dockerized and connects to an existing Supabase PostgreSQL database. Railway is the target platform — it's free at this usage level ($5/mo credit covers a single lightweight container), has no cold starts, and auto-deploys from GitHub.

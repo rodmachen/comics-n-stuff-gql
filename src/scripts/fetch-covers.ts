@@ -26,7 +26,7 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function cvFetch(url: string, retried = false): Promise<any> {
+async function cvFetch(url: string, retried = false): Promise<unknown> {
   const res = await fetch(url);
 
   if (res.status === 420) {
@@ -236,7 +236,7 @@ async function main() {
   const skippedList: string[] = [];
   const failedList: string[] = [];
 
-  for (const [seriesId, seriesIssues] of bySeries) {
+  for (const [_seriesId, seriesIssues] of bySeries) {
     seriesIdx++;
     const seriesName = seriesIssues[0].series.name;
     console.log(`\n--- [Series ${seriesIdx}/${bySeries.size}] ${seriesName} (${seriesIssues.length} issues) ---`);
