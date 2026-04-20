@@ -1,9 +1,10 @@
 name: Deploy
 
 # Runs after the CI workflow completes successfully on main.
-# The deploy key on the droplet is restricted to a single command:
-#   cd /opt/stack && git pull && docker compose -f ops/compose/docker-compose.yml up -d --build api
-# Any attempt to run anything else with that key is rejected by sshd.
+# Connects to the droplet with a passwordless ed25519 deploy key (DEPLOY_SSH_KEY),
+# pulls main into /home/rod/stack, and rebuilds the api container.
+# The .env at /home/rod/ops/compose/.env is symlinked into ops/compose/.env in the
+# checkout, so credentials live outside the git tree.
 
 on:
   workflow_run:

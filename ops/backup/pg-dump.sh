@@ -5,7 +5,7 @@
 # 2026-02-15.sql + scripts/migrate-to-postgres.py — no scheduled backup needed).
 #
 # Run via systemd timer (pg-dump.timer), or manually:
-#   sudo -u rod bash /opt/stack/ops/backup/pg-dump.sh
+#   sudo -u rod bash /home/rod/stack/ops/backup/pg-dump.sh
 #
 # Backups land in BACKUP_DIR as <db>-YYYYMMDD-HHMMSS.sql.gz and are pruned
 # after RETAIN_DAYS days.
