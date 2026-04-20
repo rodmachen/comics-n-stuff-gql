@@ -107,14 +107,26 @@ Append the public key to the droplet's `~/.ssh/authorized_keys`:
 cat ~/.ssh/comics-deploy.pub | ssh rod@<droplet-ip> "cat >> ~/.ssh/authorized_keys"
 ```
 
-Clone the repo at `/home/rod/stack` (the path the deploy workflow pulls from) and
-symlink the env file from `/home/rod/ops/compose/` so credentials live outside the
-git tree:
+Create the env file directory and populate `.env` before cloning (so the symlink
+has a target):
 
 ```bash
 ssh rod@<droplet-ip>
+mkdir -p /home/rod/ops/compose
+# Populate /home/rod/ops/compose/.env with the production values
+# (copy from 1Password or your local .env, adapting DATABASE_URL to point at
+# the container's postgres service on the droplet)
+nano /home/rod/ops/compose/.env
+```
+
+Clone the repo at `/home/rod/stack` (the path the deploy workflow pulls from) and
+symlink the env file so credentials live outside the git tree:
+
+```bash
 cd /home/rod
 git clone https://github.com/<owner>/comics-n-stuff-gql.git stack
+# For a private repo, use a GitHub deploy key or HTTPS PAT in the remote URL:
+#   git clone https://<PAT>@github.com/<owner>/comics-n-stuff-gql.git stack
 ln -s /home/rod/ops/compose/.env /home/rod/stack/ops/compose/.env
 ```
 

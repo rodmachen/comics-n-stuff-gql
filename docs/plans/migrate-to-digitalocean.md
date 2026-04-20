@@ -262,9 +262,9 @@ Actions:
    - `disk-check.sh` warns via login MOTD when `/` > 80%
    - `docker compose logs` retention: Docker's json-file driver set to `max-size=10m max-file=3`
 3. **Auto-deploy via GitHub Actions** (`.github/workflows/deploy.yml`):
-   - Generate a deploy-only SSH keypair on the droplet; restrict the public key in `~/.ssh/authorized_keys` with `command="cd /opt/stack && git pull && docker compose up -d --build api",no-port-forwarding,no-X11-forwarding,no-agent-forwarding`
+   - Generate a deploy-only SSH keypair on the laptop; append public key to droplet's `~/.ssh/authorized_keys`; deploy command passed explicitly via SSH in the workflow (no `command=` forced restriction in `authorized_keys`)
    - Add private key + droplet host as GitHub Actions secrets (`DEPLOY_SSH_KEY`, `DROPLET_HOST`, `DROPLET_USER`)
-   - Workflow triggers on push to `main` (after CI green), connects via SSH, runs the restricted command
+   - Workflow triggers on push to `main` (after CI green), connects via SSH, runs `cd /home/rod/stack && git pull && docker compose up -d --build api`
    - Rollback: documented manual path (`git checkout <prev-sha>` on droplet + rebuild)
 4. **Trial restore**: Once a second personal DB exists, wipe it, restore from the most recent backup. Time the operation. (For now, the verify step uses a throwaway DB.)
 
