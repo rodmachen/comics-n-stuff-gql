@@ -52,6 +52,7 @@ export const typeDefs = `#graphql
     id: Int!
     name: String!
     sortName: String!
+    slug: String!
     format: String!
     yearBegan: Int!
     yearEnded: Int
@@ -189,6 +190,7 @@ export const typeDefs = `#graphql
     # Series
     allSeries(limit: Int, offset: Int, search: String, publisherId: Int): SeriesConnection!
     series(id: Int!): Series
+    seriesBySlug(slug: String!): Series
 
     # Issues
     searchIssues(search: String!, issueNumber: String!, limit: Int, offset: Int): IssueConnection!
