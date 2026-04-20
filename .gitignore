@@ -7,8 +7,9 @@ dist
 # Prisma generated client
 /src/generated/prisma
 
-# Large database dumps
+# Large database dumps (but not Prisma migration SQL)
 *.sql
+!prisma/migrations/**/*.sql
 
 # Docker Compose secrets (ops/compose/)
 ops/compose/.env
