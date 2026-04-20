@@ -94,7 +94,7 @@ Actions:
 
 ---
 
-## Step 2 — Backfill `cover_image_url` + `comic_vine_id` from Supabase into DO
+## Step 2 — Backfill `cover_image_url` + `comic_vine_id` from Supabase into DO ✅
 **Model/Effort**: **Sonnet / high**
 **Justification**: Mostly mechanical (pg_dump two columns, UPDATE the other DB) but data-correctness-critical. The match-key choice from Step 1 determines the UPDATE shape. Compounding-mistake risk is real — a miswritten UPDATE can silently mis-attach URLs to wrong issues — so tests on the transform logic matter. Not Opus because the work is well-scoped once Step 1 locks the match key.
 **Context-clear**: yes (distinct chapter — data migration; benefits from fresh focus)
