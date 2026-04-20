@@ -2,6 +2,14 @@
 
 Adds a deterministic `slug` field to every `gcd_series` row for stable downstream addressing.
 
+## Important: do not use `prisma migrate deploy` standalone
+
+The two slug migrations (`20260420000000` + `20260420000001`) require a data backfill step
+between them. Running `prisma migrate deploy` against a fresh database will fail at migration
+`20260420000001` because it sets `NOT NULL` on the `slug` column before any rows have been
+populated. **Always use `scripts/apply-series-slugs.sh` instead of `prisma migrate deploy`
+for any environment that needs the slug column.**
+
 ## When to re-run
 
 After any re-import of the GCD dump (scripts/dc-comics-postgres.sql), run this runbook
@@ -47,16 +55,16 @@ If two series share the same name and starting year (rare), the row's id is appe
 After the script completes:
 
 ```bash
-# Zero null slugs on active rows
+# Zero null slugs across ALL rows (including deleted — NOT NULL constraint covers whole table)
 ssh -i ~/.ssh/droplet rod@142.93.202.59 \
   "docker exec postgres psql -U postgres -d comics_gcd -c \
-  'SELECT COUNT(*) FROM gcd_series WHERE deleted=0 AND slug IS NULL;'"
+  'SELECT COUNT(*) FROM gcd_series WHERE slug IS NULL;'"
 # → 0
 
 # Uniqueness: both counts must be equal
 ssh -i ~/.ssh/droplet rod@142.93.202.59 \
   "docker exec postgres psql -U postgres -d comics_gcd -c \
-  'SELECT COUNT(DISTINCT slug), COUNT(*) FROM gcd_series WHERE deleted=0;'"
+  'SELECT COUNT(DISTINCT slug), COUNT(*) FROM gcd_series;'"
 
 # Live API smoke test
 curl -s -X POST https://api.dcdecade.com/graphql \

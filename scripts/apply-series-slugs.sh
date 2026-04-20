@@ -40,9 +40,11 @@ psql_remote < "$MIG_1"
 echo "Migration 1 applied."
 
 step "Phase 2: Fetch series data via SSH"
+# Fetch ALL rows (including deleted) — Migration 2 sets NOT NULL across the whole table,
+# so every row needs a slug regardless of deleted status.
 $SSH "$DROPLET" \
   "docker exec postgres psql -U postgres -d comics_gcd -c \
-  \"\\COPY (SELECT id, name, year_began FROM gcd_series WHERE deleted = 0 ORDER BY id) TO STDOUT WITH (FORMAT csv, HEADER true)\"" \
+  \"\\COPY (SELECT id, name, year_began FROM gcd_series ORDER BY id) TO STDOUT WITH (FORMAT csv, HEADER true)\"" \
   > "$SERIES_CSV"
 echo "Fetched $(wc -l < "$SERIES_CSV") series rows to $SERIES_CSV."
 
@@ -74,11 +76,23 @@ SET slug = ss.slug
 FROM slug_staging ss
 WHERE s.id = ss.id;
 
-SELECT COUNT(*) AS still_null FROM gcd_series WHERE deleted = 0 AND slug IS NULL;
+SELECT COUNT(*) AS still_null FROM gcd_series WHERE slug IS NULL;
 
 COMMIT;
 SQL
 echo "Backfill complete."
+
+step "Phase 5: Pre-check before NOT NULL constraint"
+# Verify zero null slugs across the entire table (all rows, including deleted)
+# before running Migration 2, which sets NOT NULL. Any null here would cause that ALTER to fail.
+NULL_COUNT=$($SSH "$DROPLET" "docker exec postgres psql -U postgres -d comics_gcd -t -A -c \
+  'SELECT COUNT(*) FROM gcd_series WHERE slug IS NULL;'")
+if [[ "$NULL_COUNT" -ne 0 ]]; then
+  echo "ERROR: $NULL_COUNT row(s) still have NULL slugs. Aborting before Migration 2."
+  echo "       Check the slug_staging upload and re-run Phase 4 before proceeding."
+  exit 1
+fi
+echo "All rows have slugs — proceeding to finalize."
 
 step "Phase 5: Finalize (NOT NULL + UNIQUE)"
 psql_remote < "$MIG_2"
@@ -100,9 +114,9 @@ SQL
 
 step "Phase 7: Verify"
 $SSH "$DROPLET" "docker exec postgres psql -U postgres -d comics_gcd -c \
-  'SELECT COUNT(*) AS total, COUNT(slug) AS with_slug, COUNT(*) - COUNT(slug) AS null_slugs FROM gcd_series WHERE deleted = 0;'"
+  'SELECT COUNT(*) AS total, COUNT(slug) AS with_slug, COUNT(*) - COUNT(slug) AS null_slugs FROM gcd_series;'"
 $SSH "$DROPLET" "docker exec postgres psql -U postgres -d comics_gcd -c \
-  'SELECT COUNT(DISTINCT slug) AS distinct_slugs, COUNT(*) AS total FROM gcd_series WHERE deleted = 0;'"
+  'SELECT COUNT(DISTINCT slug) AS distinct_slugs, COUNT(*) AS total FROM gcd_series;'"
 $SSH "$DROPLET" "rm -f /tmp/slugs.csv && docker exec postgres rm -f /tmp/slugs.csv"
 rm -f "$SERIES_CSV" "$SLUGS_CSV"
 
