@@ -38,7 +38,7 @@ jobs:
           ssh -i /tmp/deploy_key \
               -o BatchMode=yes \
               ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} \
-              "cd /opt/stack && git pull && docker compose -f ops/compose/docker-compose.yml up -d --build api"
+              "cd /home/rod/stack && git pull && docker compose -f ops/compose/docker-compose.yml up -d --build api"
 
       - name: Remove deploy key
         if: always()
