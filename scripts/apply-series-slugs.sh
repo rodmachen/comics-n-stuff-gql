@@ -25,7 +25,9 @@ MIG_2="prisma/migrations/20260420000001_finalize_series_slug/migration.sql"
 
 log()  { echo ""; echo "==> $*"; }
 step() { echo ""; echo "──────────────────────────────────────────"; echo "  $*"; echo "──────────────────────────────────────────"; }
-psql_remote() { $SSH "$DROPLET" "docker exec -i postgres psql -U postgres -d comics_gcd $*"; }
+# Pass SQL via stdin; -v ON_ERROR_STOP=1 makes psql exit non-zero on SQL errors
+psql_remote() { $SSH "$DROPLET" "docker exec -i postgres psql -U postgres -d comics_gcd -v ON_ERROR_STOP=1"; }
+psql_remote_cmd() { $SSH "$DROPLET" "docker exec postgres psql -U postgres -d comics_gcd -v ON_ERROR_STOP=1 -c '$1'"; }
 
 step "Preflight"
 [[ -f "$SSH_KEY" ]] || { echo "ERROR: SSH key $SSH_KEY not found."; exit 1; }
@@ -49,8 +51,11 @@ npx tsx scripts/compute-slugs.ts "$SERIES_CSV" "$SLUGS_CSV"
 echo "CSV written: $(wc -l < "$SLUGS_CSV") lines (including header)."
 
 step "Phase 4: Upload CSV and backfill"
+# SCP to droplet host, then docker cp into the container so server-side COPY can read it
 $SCP "$SLUGS_CSV" "$DROPLET:/tmp/slugs.csv"
-$SSH "$DROPLET" "docker exec -i postgres psql -U postgres -d comics_gcd" <<'SQL'
+$SSH "$DROPLET" "docker cp /tmp/slugs.csv postgres:/tmp/slugs.csv"
+
+psql_remote <<'SQL'
 BEGIN;
 
 CREATE TEMP TABLE slug_staging (
@@ -58,9 +63,8 @@ CREATE TEMP TABLE slug_staging (
   slug VARCHAR(255) NOT NULL
 );
 
-\COPY slug_staging(id, slug) FROM '/tmp/slugs.csv' WITH (FORMAT csv, HEADER true);
+COPY slug_staging(id, slug) FROM '/tmp/slugs.csv' WITH (FORMAT csv, HEADER true);
 
--- Dry-run count
 SELECT COUNT(*) AS rows_to_update FROM gcd_series s
 JOIN slug_staging ss ON s.id = ss.id
 WHERE s.slug IS DISTINCT FROM ss.slug;
@@ -95,8 +99,11 @@ SELECT migration_name, finished_at FROM "_prisma_migrations" ORDER BY started_at
 SQL
 
 step "Phase 7: Verify"
-psql_remote -c "SELECT COUNT(*) AS total, COUNT(slug) AS with_slug, COUNT(*) - COUNT(slug) AS null_slugs FROM gcd_series WHERE deleted = 0;"
-$SSH "$DROPLET" "rm -f /tmp/slugs.csv"
+$SSH "$DROPLET" "docker exec postgres psql -U postgres -d comics_gcd -c \
+  'SELECT COUNT(*) AS total, COUNT(slug) AS with_slug, COUNT(*) - COUNT(slug) AS null_slugs FROM gcd_series WHERE deleted = 0;'"
+$SSH "$DROPLET" "docker exec postgres psql -U postgres -d comics_gcd -c \
+  'SELECT COUNT(DISTINCT slug) AS distinct_slugs, COUNT(*) AS total FROM gcd_series WHERE deleted = 0;'"
+$SSH "$DROPLET" "rm -f /tmp/slugs.csv && docker exec postgres rm -f /tmp/slugs.csv"
 rm -f "$SERIES_CSV" "$SLUGS_CSV"
 
 echo ""
