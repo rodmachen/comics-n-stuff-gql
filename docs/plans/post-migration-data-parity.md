@@ -210,7 +210,7 @@ Actions:
 
 ---
 
-## Step 4 — Publish downstream mapping doc
+## Step 4 — Publish downstream mapping doc ✅
 **Model/Effort**: **Haiku / low**
 **Justification**: Pure documentation deliverable — a handoff for the dc-decade repo. No code surface, no ambiguity, no correctness risk. Haiku handles this well.
 **Context-clear**: no (small task, builds on Step 3's output)
@@ -241,17 +241,20 @@ Actions:
 **Files modified**: none (may touch PR description)
 
 Actions:
-1. Full CI green on feature branch.
+1. Full CI green on feature branch. ✅ (2026-04-20)
 2. Live API smoke (copy-paste reproducible in PR description):
    ```bash
    curl -s -X POST https://api.dcdecade.com/graphql \
      -H "Content-Type: application/json" \
      -d '{"query":"{ allSeries(limit: 5) { totalCount items { id name slug issues(limit: 1) { id coverImageUrl } } } }"}' | jq .
    ```
-   Expect: every series has a non-null `slug`; every issue has a non-null `coverImageUrl`.
-3. `seriesBySlug` round-trip for 3 mapped entries.
-4. Confirm Supabase data matches: `SELECT COUNT(*) FROM gcd_issue WHERE cover_image_url IS NOT NULL` on both DBs returns identical numbers.
+   `coverImageUrl` confirmed non-null on Crisis on Infinite Earths, Watchmen, Sandman. ✅ (2026-04-20)
+   `slug` field pending post-deploy verification (auto-deploys on merge to main).
+3. `seriesBySlug` round-trip for 3 mapped entries. Pending post-deploy.
+4. Confirm Supabase data matches: `SELECT COUNT(*) FROM gcd_issue WHERE cover_image_url IS NOT NULL` on both DBs returns identical numbers. Pending.
 5. Merge the PR (user action, not Claude).
+
+**Note on deployment order**: `seriesBySlug` resolver and `slug` field require the API container on DO to be rebuilt with feature branch code. This happens automatically via `deploy.yml` after merge → CI pass. Post-merge actions: run items 3 and 4 above, then confirm.
 
 **Verify**:
 - All three curl responses match expectations.
