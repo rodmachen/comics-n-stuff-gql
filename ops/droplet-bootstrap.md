@@ -94,49 +94,41 @@ sudo systemctl status fail2ban         # active (running)
 
 ## 8. Deploy SSH key (for GitHub Actions auto-deploy)
 
-Generate a dedicated keypair on the droplet (Ed25519, no passphrase):
+Generate a dedicated passwordless keypair **on your laptop** (the workflow can't unlock
+a passphrase-protected key):
 
 ```bash
-ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/deploy_key -N ""
+ssh-keygen -t ed25519 -f ~/.ssh/comics-deploy -N "" -C "comics-n-stuff-gql deploy"
 ```
 
-Add the public key to `~/.ssh/authorized_keys` with a **restricted command** so it
-can only run the deploy script and nothing else:
+Append the public key to the droplet's `~/.ssh/authorized_keys`:
 
 ```bash
-echo "command=\"cd /opt/stack && git pull && docker compose -f ops/compose/docker-compose.yml up -d --build api\",no-port-forwarding,no-X11-forwarding,no-agent-forwarding $(cat ~/.ssh/deploy_key.pub)" >> ~/.ssh/authorized_keys
+cat ~/.ssh/comics-deploy.pub | ssh rod@<droplet-ip> "cat >> ~/.ssh/authorized_keys"
 ```
 
-Print the private key to copy into the GitHub Actions secret (`DEPLOY_SSH_KEY`):
+Clone the repo at `/home/rod/stack` (the path the deploy workflow pulls from) and
+symlink the env file from `/home/rod/ops/compose/` so credentials live outside the
+git tree:
 
 ```bash
-cat ~/.ssh/deploy_key
+ssh rod@<droplet-ip>
+cd /home/rod
+git clone https://github.com/<owner>/comics-n-stuff-gql.git stack
+ln -s /home/rod/ops/compose/.env /home/rod/stack/ops/compose/.env
 ```
 
-Add these three secrets to the GitHub repo
-(`Settings → Secrets and variables → Actions → New repository secret`):
-
-| Secret name      | Value                            |
-|------------------|----------------------------------|
-| `DEPLOY_SSH_KEY` | contents of `~/.ssh/deploy_key`  |
-| `DROPLET_HOST`   | droplet IP or hostname           |
-| `DROPLET_USER`   | `rod`                            |
-
-**Test the restriction** — this must fail with "Permission denied" or "forced command":
+Set the three GitHub Actions secrets (`gh` CLI from your laptop):
 
 ```bash
-ssh -i ~/.ssh/deploy_key rod@<droplet-ip> ls
+gh secret set DEPLOY_SSH_KEY < ~/.ssh/comics-deploy
+gh secret set DROPLET_HOST   --body "<droplet-ip>"
+gh secret set DROPLET_USER   --body "rod"
 ```
 
-And this must succeed (runs the deploy command):
-
-```bash
-ssh -i ~/.ssh/deploy_key rod@<droplet-ip>
-```
-
-> **Note**: The repo at `/opt/stack` must be cloned before the deploy key works.
-> Clone it once manually: `git clone https://github.com/<owner>/comics-n-stuff-gql.git /opt/stack`
-> For a private repo, use a GitHub deploy key or HTTPS token in the remote URL.
+The deploy workflow runs the build command directly via SSH — no `command=` forced
+restriction in `authorized_keys` is needed. The key is unrestricted on the droplet,
+so keep it passwordless **and** dedicated to this repo (rotate by regenerating).
 
 ---
 
@@ -149,8 +141,8 @@ For any future personal databases on this droplet, install the weekly backup tim
 
 ```bash
 # Copy units from repo
-sudo cp /opt/stack/ops/backup/pg-dump.service /etc/systemd/system/
-sudo cp /opt/stack/ops/backup/pg-dump.timer /etc/systemd/system/
+sudo cp /home/rod/stack/ops/backup/pg-dump.service /etc/systemd/system/
+sudo cp /home/rod/stack/ops/backup/pg-dump.timer /etc/systemd/system/
 
 # Create backup directory
 sudo mkdir -p /var/backups/postgres
@@ -165,7 +157,7 @@ sudo systemctl list-timers pg-dump.timer
 Manual test run:
 
 ```bash
-bash /opt/stack/ops/backup/pg-dump.sh
+bash /home/rod/stack/ops/backup/pg-dump.sh
 ls -lh /var/backups/postgres/
 ```
 
@@ -176,7 +168,7 @@ ls -lh /var/backups/postgres/
 Install the disk-check script so it runs at every SSH login:
 
 ```bash
-sudo cp /opt/stack/ops/monitoring/disk-check.sh /etc/update-motd.d/99-disk-check
+sudo cp /home/rod/stack/ops/monitoring/disk-check.sh /etc/update-motd.d/99-disk-check
 sudo chmod +x /etc/update-motd.d/99-disk-check
 ```
 

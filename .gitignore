@@ -15,3 +15,6 @@ dist
 ops/compose/.env
 ops/compose/pgbouncer/userlist.txt
 ops/compose/pgbouncer/tls/
+
+# Per-user Claude Code settings
+.claude/settings.local.json
