@@ -59,7 +59,7 @@ Actions:
 
 ---
 
-## Step 1 — Diagnose: verify ID stability and cover-URL delta
+## Step 1 — Diagnose: verify ID stability and cover-URL delta ✅
 **Model/Effort**: **Opus / high**
 **Justification**: (a) Ambiguity is high — we have a hypothesis (GCD dump preserves IDs → Supabase & DO IDs align) but haven't proven it; (b) wrong conclusion compounds: if IDs have drifted, Step 2's fast backfill-by-ID is silently wrong and writes valid-looking but misaligned Cloudinary URLs into DO; (c) correctness is hard to verify post-hoc — once wrong data is written, teasing it out is painful. Worth the deliberate model. Not xhigh because the diagnostic surface is well-scoped (two DBs, specific tables, specific columns).
 **Context-clear**: yes (distinct chapter — pure investigation, benefits from fresh context after branch setup)
