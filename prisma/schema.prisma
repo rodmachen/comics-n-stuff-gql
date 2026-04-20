@@ -123,6 +123,7 @@ model Series {
   hasAboutComics    Int    @map("has_about_comics") @db.SmallInt
   hasIndiciaPrinter Int    @map("has_indicia_printer") @db.SmallInt
   hasPublisherCodeNumber Int @map("has_publisher_code_number") @db.SmallInt
+  slug              String  @unique @map("slug") @db.VarChar(255)
 
   publisher       Publisher              @relation(fields: [publisherId], references: [id])
   country         Country                @relation(fields: [countryId], references: [id])

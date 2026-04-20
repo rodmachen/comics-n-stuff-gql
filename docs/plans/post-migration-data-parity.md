@@ -164,7 +164,7 @@ Actions:
 
 ---
 
-## Step 3 — Add `Series.slug` for downstream stability
+## Step 3 — Add `Series.slug` for downstream stability ✅
 **Model/Effort**: **Sonnet / high**
 **Justification**: Schema addition + Prisma migration + GraphQL typedef + resolver touch + slug generation logic. Slug generation is pure transformation (good TDD candidate), but the migration must backfill existing rows deterministically. Uniqueness under realistic GCD duplicates (multiple "Batman" volumes across decades) is the trap — the slug must include `yearBegan` (or a disambiguator) to avoid collisions. Opus is overkill for this shape of work; Haiku would underweight the uniqueness trap.
 **Context-clear**: yes (distinct chapter — schema surface change; fresh context avoids carrying Step 2's data-migration mindset into what is really code design)

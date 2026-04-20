@@ -16,6 +16,7 @@ describe("GraphQL Schema", () => {
     expect(fields).toContain("publisher");
     expect(fields).toContain("allSeries");
     expect(fields).toContain("series");
+    expect(fields).toContain("seriesBySlug");
     expect(fields).toContain("issues");
     expect(fields).toContain("issue");
     expect(fields).toContain("stories");
@@ -88,5 +89,25 @@ describe("GraphQL Schema", () => {
     expect(sdl).toContain("type Issue");
     expect(sdl).toContain("type Query");
     expect(sdl).toContain("totalCount: Int!");
+  });
+
+  it("Series type has slug field as non-null String", () => {
+    const schema = buildSchema(typeDefs);
+    const seriesType = schema.getType("Series");
+    expect(seriesType).toBeDefined();
+    if (seriesType && "getFields" in seriesType) {
+      const fields = (seriesType as { getFields: () => Record<string, { type: { toString(): string } }> }).getFields();
+      expect(fields).toHaveProperty("slug");
+      expect(fields.slug.type.toString()).toBe("String!");
+    }
+  });
+
+  it("seriesBySlug query accepts a slug argument", () => {
+    const schema = buildSchema(typeDefs);
+    const queryType = schema.getQueryType()!;
+    const fields = queryType.getFields();
+    expect(fields).toHaveProperty("seriesBySlug");
+    const args = fields.seriesBySlug.args;
+    expect(args.some(a => a.name === "slug")).toBe(true);
   });
 });

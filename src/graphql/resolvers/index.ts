@@ -145,6 +145,10 @@ export const resolvers = {
       return prisma.series.findUnique({ where: { id } });
     }),
 
+    seriesBySlug: withErrorHandling(async (_, { slug }: { slug: string }) => {
+      return prisma.series.findUnique({ where: { slug } });
+    }),
+
     // Issues
     searchIssues: withErrorHandling(async (
       _,
