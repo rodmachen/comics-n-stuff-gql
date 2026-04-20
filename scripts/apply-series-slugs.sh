@@ -2,15 +2,14 @@
 # scripts/apply-series-slugs.sh
 # Applies the two Series.slug migrations to the DO droplet:
 #   1. Adds nullable slug column (migration 20260420000000)
-#   2. Generates slugs locally, uploads CSV, backfills rows
+#   2. Fetches series data via SSH, computes slugs locally, uploads CSV, backfills rows
 #   3. Sets NOT NULL + UNIQUE (migration 20260420000001)
 #   4. Records both migrations in _prisma_migrations
 #
 # Usage:
-#   DO_DATABASE_URL="..." bash scripts/apply-series-slugs.sh
+#   bash scripts/apply-series-slugs.sh
 #
 # Prerequisites:
-#   - DO_DATABASE_URL pointing at the PgBouncer endpoint (for compute-slugs.ts)
 #   - SSH key at ~/.ssh/droplet
 #   - tsx available (npx tsx)
 set -euo pipefail
@@ -19,6 +18,7 @@ DROPLET="rod@142.93.202.59"
 SSH_KEY="$HOME/.ssh/droplet"
 SSH="ssh -i $SSH_KEY"
 SCP="scp -i $SSH_KEY"
+SERIES_CSV="/tmp/series-raw.csv"
 SLUGS_CSV="/tmp/slugs.csv"
 MIG_1="prisma/migrations/20260420000000_add_series_slug_nullable/migration.sql"
 MIG_2="prisma/migrations/20260420000001_finalize_series_slug/migration.sql"
@@ -29,7 +29,6 @@ psql_remote() { $SSH "$DROPLET" "docker exec -i postgres psql -U postgres -d com
 
 step "Preflight"
 [[ -f "$SSH_KEY" ]] || { echo "ERROR: SSH key $SSH_KEY not found."; exit 1; }
-[[ -n "${DO_DATABASE_URL:-}" ]] || { echo "ERROR: DO_DATABASE_URL is not set."; exit 1; }
 $SSH "$DROPLET" "docker exec postgres pg_isready -U postgres" \
   || { echo "ERROR: Postgres not ready on droplet."; exit 1; }
 echo "Droplet reachable."
@@ -38,11 +37,18 @@ step "Phase 1: Add nullable slug column"
 psql_remote < "$MIG_1"
 echo "Migration 1 applied."
 
-step "Phase 2: Compute slugs locally"
-DATABASE_URL="$DO_DATABASE_URL" npx tsx scripts/compute-slugs.ts "$SLUGS_CSV"
-echo "CSV written to $SLUGS_CSV ($(wc -l < "$SLUGS_CSV") lines including header)."
+step "Phase 2: Fetch series data via SSH"
+$SSH "$DROPLET" \
+  "docker exec postgres psql -U postgres -d comics_gcd -c \
+  \"\\COPY (SELECT id, name, year_began FROM gcd_series WHERE deleted = 0 ORDER BY id) TO STDOUT WITH (FORMAT csv, HEADER true)\"" \
+  > "$SERIES_CSV"
+echo "Fetched $(wc -l < "$SERIES_CSV") series rows to $SERIES_CSV."
 
-step "Phase 3: Upload CSV and backfill"
+step "Phase 3: Compute slugs locally"
+npx tsx scripts/compute-slugs.ts "$SERIES_CSV" "$SLUGS_CSV"
+echo "CSV written: $(wc -l < "$SLUGS_CSV") lines (including header)."
+
+step "Phase 4: Upload CSV and backfill"
 $SCP "$SLUGS_CSV" "$DROPLET:/tmp/slugs.csv"
 $SSH "$DROPLET" "docker exec -i postgres psql -U postgres -d comics_gcd" <<'SQL'
 BEGIN;
@@ -52,7 +58,7 @@ CREATE TEMP TABLE slug_staging (
   slug VARCHAR(255) NOT NULL
 );
 
-COPY slug_staging(id, slug) FROM '/tmp/slugs.csv' WITH (FORMAT csv, HEADER true);
+\COPY slug_staging(id, slug) FROM '/tmp/slugs.csv' WITH (FORMAT csv, HEADER true);
 
 -- Dry-run count
 SELECT COUNT(*) AS rows_to_update FROM gcd_series s
@@ -70,11 +76,11 @@ COMMIT;
 SQL
 echo "Backfill complete."
 
-step "Phase 4: Finalize (NOT NULL + UNIQUE)"
+step "Phase 5: Finalize (NOT NULL + UNIQUE)"
 psql_remote < "$MIG_2"
 echo "Migration 2 applied."
 
-step "Phase 5: Record migrations in _prisma_migrations"
+step "Phase 6: Record migrations in _prisma_migrations"
 CHECKSUM_1=$(openssl dgst -sha256 "$MIG_1" | awk '{print $2}')
 CHECKSUM_2=$(openssl dgst -sha256 "$MIG_2" | awk '{print $2}')
 
@@ -88,9 +94,10 @@ ON CONFLICT ("id") DO NOTHING;
 SELECT migration_name, finished_at FROM "_prisma_migrations" ORDER BY started_at;
 SQL
 
-step "Phase 6: Verify"
+step "Phase 7: Verify"
 psql_remote -c "SELECT COUNT(*) AS total, COUNT(slug) AS with_slug, COUNT(*) - COUNT(slug) AS null_slugs FROM gcd_series WHERE deleted = 0;"
 $SSH "$DROPLET" "rm -f /tmp/slugs.csv"
+rm -f "$SERIES_CSV" "$SLUGS_CSV"
 
 echo ""
 echo "✓ Series.slug migration complete."

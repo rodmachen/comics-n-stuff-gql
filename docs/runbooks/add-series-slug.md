@@ -10,7 +10,6 @@ to repopulate slugs for the new dataset.
 ## Prerequisites
 
 - SSH key at `~/.ssh/droplet` with access to `rod@142.93.202.59`
-- `DO_DATABASE_URL` set (PgBouncer endpoint, sslmode=require)
 - Docker postgres container healthy on the droplet
 - `tsx` available: `npm install -g tsx` or `npx tsx`
 
@@ -19,7 +18,7 @@ to repopulate slugs for the new dataset.
 ### 1. Apply (first time)
 
 ```bash
-DO_DATABASE_URL="postgres://..." bash scripts/apply-series-slugs.sh
+bash scripts/apply-series-slugs.sh
 ```
 
 The script:
@@ -32,16 +31,9 @@ The script:
 
 ### 2. Re-run after a fresh GCD import
 
-After re-importing the raw GCD dump, the slug column won't exist yet, so run the
-full script again. The script is idempotent only for the data phase; if the column
-already exists, migration 1 will error. In that case, run just phases 2–4:
-
-```bash
-# Manually if column already exists
-DO_DATABASE_URL="$DO_DATABASE_URL" npx tsx scripts/compute-slugs.ts /tmp/slugs.csv
-scp -i ~/.ssh/droplet /tmp/slugs.csv rod@142.93.202.59:/tmp/slugs.csv
-# Then run the backfill SQL from Phase 3 of the script manually
-```
+After re-importing the raw GCD dump the slug column won't exist yet, so run the
+full script again. If the column already exists (partial re-run), migration 1
+will error — skip Phase 1 and run phases 2–7 manually following the script.
 
 ## Slug format
 
